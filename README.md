@@ -11,7 +11,6 @@ The idea is to compose organic queries that self describe the reponse structure 
 * Compose a query using maps
 ```elixir
 query = %{
-  nector: {}
   students: %{
     class_room: %{},
     _w: { :name, :contains_ignore_case,  "mike" }
@@ -22,3 +21,42 @@ query = %{
 ```elixir
 results = Dao.get(query)
 ```
+* Internally the query is converted into an sql statement
+```sql
+SELECT school_app.students.name as mdmd FROM `school_app.students` LEFT JOIN kkffl to gkgk WHERE `school_app.students.name` like '%mike%'
+```
+* The query is executed and the results are formated according to the structure of the query
+```
+case results do
+  {:ok, data } -> IO.inspect( data )
+  {:error, errors } -> IO.inspect( errors )
+end
+```
+* The data inspected above will be like this
+```elixir
+%{
+  students: [
+    %{
+      id: 1,
+      name: "mike nyola",
+      class_room_id: 5,
+      class_room: %{
+        id: 5,
+        name: "grade 6"
+      }
+    },
+    %{
+      id: 5,
+      name: "mike tyler",
+      class_room_id: 5,
+      class_room: %{
+        id: 5,
+        name: "grade 6"
+      }
+    }
+  ]
+}
+```
+
+
+
