@@ -1,0 +1,3 @@
+%{
+  "inflex": {:hex, :inflex, "2.0.0", "db69d542b8fdb23ac667f9bc0c2395a3983fa2da6ae2efa7ab5dc541928f7a75", [:mix], [], "hexpm", "c018852409bd48b03ad96ed53594186bc074bdd1519043a0ad1fa5697aac4399"},
+}
