@@ -72,6 +72,10 @@ scheduled for execution
 
 * create database
 
+Before running any sqls in the kwl_nodes or root nodes make sure to reverse the list before execution
+because during the process of generating the sql statements these lists are appended at the start for 
+perfomrace reasons.
+
 ## SQL Resources
 
 * [https://www.youtube.com/watch?v=HXV3zeQKqGY](https://www.youtube.com/watch?v=HXV3zeQKqGY)
