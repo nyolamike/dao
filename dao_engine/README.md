@@ -51,6 +51,9 @@ should return
 The dao.json file is updated after db changes have been executed
 If the query gets an error also a rollback of these atcions must be executed incase a config of rollback schema auto create schema changes has been set to true
 
+  These queries must be executed in a transaction manner, either they all succeed or
+the whole request fails due to fatal error
+
 * parrallel
 
 * When a name of a table cannot be plural or single,
@@ -66,3 +69,9 @@ auto_alter_db config setting to true, by default this is false.
 to true, then that table must be created before other queries are executed, infact
 during the process of converting a query to sql, these scenarios are identified and
 scheduled for execution
+
+* create database
+
+## SQL Resources
+
+* [https://www.youtube.com/watch?v=HXV3zeQKqGY](https://www.youtube.com/watch?v=HXV3zeQKqGY)

@@ -32,7 +32,11 @@ defmodule DaoEngineTest do
 
   test "generate sql for a get fixture " do
     context = %{
-      database_name: "grocerify"
+      database_type: "mysql",
+      database_name: "grocerify",
+      schema: %{},
+      auto_schema_changes: [],
+      auto_alter_db: true
     }
 
     shop_fixtures_kwl_node = [
@@ -57,21 +61,67 @@ defmodule DaoEngineTest do
 
     results = Dao.gen_sql_for_get_fixture(context, query, shop_fixtures_kwl_node)
 
-    expected_results = [
-      shops: %{
-        sql: "SELECT * FROM `#{context.database_name}.shops` WHERE is_deleted == 0",
-        is_list: true
-      }
-    ]
+    expected_results = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          """
+            CREATE TABLE `grocerify.shops` (
+              id INT PRIMARY KEY,
+              created_at
+              last_update_on
+              is_deleted INT
+              deleted_on
+            )
+          """
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
+          shops: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
+          }
+        }
+      },
+      fixture_list: [
+        shops: %{
+          is_list: true,
+          sql: "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"
+        }
+      ]
+    }
 
     results_craft = Dao.gen_sql_for_get_fixture(context, query, aircraft_fixtures_kwl_node)
 
-    expected_results_craft = [
-      aircraft: %{
-        sql: "SELECT * FROM `#{context.database_name}.aircraft` WHERE is_deleted == 0",
-        is_list: false
-      }
-    ]
+    expected_results_craft = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          "  CREATE TABLE `grocerify.aircraft` (\n    id INT PRIMARY KEY,\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n"
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
+          aircraft: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
+          }
+        }
+      },
+      fixture_list: [
+        aircraft: %{
+          is_list: false,
+          sql: "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+        }
+      ]
+    }
 
     assert expected_results == results
     assert expected_results_craft == results_craft
@@ -79,7 +129,11 @@ defmodule DaoEngineTest do
 
   test "generate sql for get root command node" do
     context = %{
-      database_name: "grocerify"
+      database_type: "mysql",
+      database_name: "grocerify",
+      schema: %{},
+      auto_schema_changes: [],
+      auto_alter_db: true
     }
 
     shop_get_cmd_node = [
@@ -104,25 +158,60 @@ defmodule DaoEngineTest do
 
     results = Dao.gen_sql_for_get(context, query, shop_get_cmd_node)
 
-    expected_results = [
-      list_of_shops: [
-        shops: %{
-          sql: "SELECT * FROM `#{context.database_name}.shops` WHERE is_deleted == 0",
-          is_list: true
+    expected_results = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          "  CREATE TABLE `grocerify.shops` (\n    id INT PRIMARY KEY,\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n"
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
+          shops: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
+          }
         }
+      },
+      input_node_list: [
+        list_of_shops: [
+          shops: %{is_list: true, sql: "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"}
+        ]
       ]
-    ]
+    }
 
     results_aircraft = Dao.gen_sql_for_get(context, query, aircraft_get_cmd_node)
 
-    expected_results_aircraft = [
-      biggest_aircraft: [
-        aircraft: %{
-          sql: "SELECT * FROM `#{context.database_name}.aircraft` WHERE is_deleted == 0",
-          is_list: false
+    expected_results_aircraft = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          "  CREATE TABLE `grocerify.aircraft` (\n    id INT PRIMARY KEY,\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n"
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
+          aircraft: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
+          }
         }
+      },
+      input_node_list: [
+        biggest_aircraft: [
+          aircraft: %{
+            is_list: false,
+            sql: "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+          }
+        ]
       ]
-    ]
+    }
 
     assert expected_results == results
     assert expected_results_aircraft == results_aircraft
@@ -130,7 +219,11 @@ defmodule DaoEngineTest do
 
   test "executes get query " do
     context = %{
-      database_name: "grocerify"
+      database_type: "mysql",
+      database_name: "grocerify",
+      schema: %{},
+      auto_schema_changes: [],
+      auto_alter_db: true
     }
 
     shop_get_cmd_node = [
@@ -155,24 +248,107 @@ defmodule DaoEngineTest do
 
     results = Dao.execute(context, query)
 
-    expected_results = [
-      [
-        list_of_shops: [
-          shops: %{
-            is_list: true,
-            sql: "SELECT * FROM `#{context.database_name}.shops` WHERE is_deleted == 0"
-          }
-        ]
-      ],
-      [
-        biggest_aircraft: [
+    expected_results = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          "  CREATE TABLE `grocerify.aircraft` (\n    id INT PRIMARY KEY,\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n",
+          "  CREATE TABLE `grocerify.shops` (\n    id INT PRIMARY KEY,\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n"
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
           aircraft: %{
-            is_list: false,
-            sql: "SELECT * FROM `#{context.database_name}.aircraft` WHERE is_deleted == 0"
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
+          },
+          shops: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp
           }
+        }
+      },
+      root_cmd_node_list: [
+        get: [
+          biggest_aircraft: [
+            aircraft: %{
+              is_list: false,
+              sql: "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+            }
+          ]
+        ],
+        get: [
+          list_of_shops: [
+            shops: %{is_list: true, sql: "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"}
+          ]
         ]
       ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "executes get query will not schedule tables to be auto created when auto_alter_db is set to false " do
+    context = %{
+      database_type: "mysql",
+      database_name: "grocerify",
+      schema: %{},
+      auto_schema_changes: [],
+      auto_alter_db: false
+    }
+
+    shop_get_cmd_node = [
+      list_of_shops: [
+        # a fixture
+        shops: %{}
+      ]
     ]
+
+    aircraft_get_cmd_node = [
+      biggest_aircraft: [
+        aircraft: %{
+          is_list: false
+        }
+      ]
+    ]
+
+    query = [
+      get: shop_get_cmd_node,
+      get: aircraft_get_cmd_node
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      context: %{
+        auto_alter_db: false,
+        auto_schema_changes: [],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{}
+      },
+      root_cmd_node_list: [
+        get: [
+          biggest_aircraft: [
+            aircraft: %{
+              is_list: false,
+              sql: "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+            }
+          ]
+        ],
+        get: [
+          list_of_shops: [
+            shops: %{is_list: true, sql: "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"}
+          ]
+        ]
+      ]
+    }
 
     assert expected_results == results
   end
