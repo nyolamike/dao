@@ -20,16 +20,6 @@ defmodule DaoEngine do
     :world
   end
 
-  @doc """
-    %{
-      get: {
-        list_of: %{
-          shops: %{}
-        },
-      }
-    }
-  """
-
   def execute(context, query_object) do
     # query object have the following root keys
     # get
@@ -47,6 +37,7 @@ defmodule DaoEngine do
     end)
   end
 
+  @spec gen_sql_for_get(map(), keyword(), keyword()) :: keyword()
   def gen_sql_for_get(context, query_object, input_kwl_node) do
     Enum.map(input_kwl_node, fn {node_name_key, fixtures_kwl_node} ->
       fixtures = gen_sql_for_get_fixture(context, query_object, fixtures_kwl_node)
@@ -54,14 +45,16 @@ defmodule DaoEngine do
     end)
   end
 
-  def gen_sql_for_get_fixture(context, query_object, fixtures_kwl_node) do
+  @spec gen_sql_for_get_fixture(map(), keyword(), keyword()) :: keyword()
+  def gen_sql_for_get_fixture(context, _query_object, fixtures_kwl_node) do
     Enum.map(fixtures_kwl_node, fn {node_name_key, query_config} ->
       str_node_name_key = Atom.to_string(node_name_key)
       is_list = is_word_plural?(query_config, str_node_name_key)
       plural_table_name = Inflex.pluralize(str_node_name_key)
-      sql = "SELECT * "
-      sql = sql <> " FROM `" <> context.database_name <> "." <> plural_table_name  <> "`"
-      sql = sql <> " WHERE is_deleted == 0 "
+      sql = "SELECT *"
+      sql = sql <> " FROM `" <> context.database_name <> "." <> plural_table_name <> "`"
+      sql = sql <> " WHERE is_deleted == 0"
+
       fixture_config = %{
         sql: sql,
         is_list: is_list

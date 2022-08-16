@@ -47,12 +47,22 @@ should return
 
 * auto_create
 
-If a table or column does not exist, it is auto created, before the query is executed
+  If a table or column does not exist, it is auto created, before the query is executed
 The dao.json file is updated after db changes have been executed
 If the query gets an error also a rollback of these atcions must be executed incase a config of rollback schema auto create schema changes has been set to true
 
 * parrallel
 
-- when a name of a table cannot be plural or single, one can add a config of is_list to either
-indicate that the intent is for a list or false to indicate a single item, by default the engine
-assumes a list
+* When a name of a table cannot be plural or single,
+one can add a config of is_list to either indicate that the intent is for a list
+or false to indicate a single item, by default the engine assumes a list
+
+* schema
+The schema is kept in a json file called dao.json and controlled by a single process
+Requests to modify/alter the schema during runtime are allowed by setting the
+auto_alter_db config setting to true, by default this is false.
+
+  When a table doesnot exist in the db and is part of a request and auto_alter_db is set
+to true, then that table must be created before other queries are executed, infact
+during the process of converting a query to sql, these scenarios are identified and
+scheduled for execution
