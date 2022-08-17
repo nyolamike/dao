@@ -352,4 +352,93 @@ defmodule DaoEngineTest do
 
     assert expected_results == results
   end
+
+  test "auto create columns during selection   " do
+    context = %{
+      database_type: "mysql",
+      database_name: "grocerify",
+      schema: %{},
+      auto_schema_changes: [],
+      auto_alter_db: true
+    }
+
+    query = [
+      get: [
+        employees_list: [
+          employees: %{
+            use_default_pk: false,
+            columns: %{
+              emp_id: :pk,
+              first_name: %{
+                type: :string,
+                size: 50,
+                required: true
+              },
+              last_name: :string,
+              status: %{
+                type: :string,
+                size: 10,
+                default: "pending"
+              }
+            }
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    columns_sql =
+      "first_name VARCHAR(50) NOT NULL, last_name VARCHAR(30) NULL, status VARCHAR(10) DEFAULT 'pending'"
+
+    expected_results = %{
+      context: %{
+        auto_alter_db: true,
+        auto_schema_changes: [
+          "  CREATE TABLE `grocerify.employees` (\n    id INT PRIMARY KEY,\n #{columns_sql},\n    created_at\n    last_update_on\n    is_deleted INT\n    deleted_on\n  )\n"
+        ],
+        database_name: "grocerify",
+        database_type: "mysql",
+        schema: %{
+          employees: %{
+            created_at: :timestamp,
+            deleted_on: :timestamp,
+            id: :pk,
+            is_deleted: :boolean,
+            last_update_on: :timestamp,
+            first_name: %{
+              type: :string,
+              size: 50,
+              required: true
+            },
+            last_name: :string,
+            status: %{
+              type: :string,
+              size: 10,
+              default: "pending"
+            }
+          }
+        }
+      },
+      root_cmd_node_list: [
+        get: [
+          employees_list: [
+            employees: %{
+              is_list: true,
+              sql: """
+                SELECT
+                  `grocerify.employees.id`,
+                  `grocerify.employees.first_name`,
+                  `grocerify.employees.last_name`,
+                  `grocerify.employees.status`
+                FROM `grocerify.employees` WHERE is_deleted == 0
+              """
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
 end

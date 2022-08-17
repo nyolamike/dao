@@ -84,7 +84,11 @@ defmodule DaoEngine do
       str_node_name_key = Atom.to_string(node_name_key)
       is_list = is_word_plural?(query_config, str_node_name_key)
       # check if the table exists in the schema
-      context = gen_sql_ensure_table_exists(result_acc.context, str_node_name_key)
+      if str_node_name_key == "" do
+        IO.inspect("obugi")
+        IO.inspect(query_config)
+      end
+      context = gen_sql_ensure_table_exists(result_acc.context, str_node_name_key, query_config)
       sql = "SELECT *"
       sql = sql <> " FROM #{sql_table_name(result_acc.context, str_node_name_key)}"
       sql = sql <> " WHERE is_deleted == 0"
@@ -120,23 +124,58 @@ defmodule DaoEngine do
     end
   end
 
-  @spec gen_sql_ensure_table_exists(map(), binary()) :: map()
-  def gen_sql_ensure_table_exists(%{auto_alter_db: false} = context, _table_name), do: context
+  @spec gen_sql_ensure_table_exists(map(), binary(), map()) :: map()
+  def gen_sql_ensure_table_exists(%{auto_alter_db: false} = context, _table_name, _query_config),
+    do: context
 
-  def gen_sql_ensure_table_exists(context, table_name) do
+  def gen_sql_ensure_table_exists(context, table_name, query_config) do
     plural_table_name = Inflex.pluralize(table_name)
     key = String.to_atom(plural_table_name)
 
-    if Map.has_key?(context.schema, key) == false do
-      sql = """
-        CREATE TABLE #{sql_table_name(context, plural_table_name)} (
-          #{sql_create_column(context, "id", :pk)},
-          created_at
-          last_update_on
-          #{sql_create_column(context, "is_deleted", :boolean)}
-          deleted_on
+
+    if context.schema |> Map.has_key?(key) == false do
+      set_default_standard_pk = if Map.has_key?(query_config, :use_default_pk), do: query_config.use_default_pk, else: true
+      default_standard_col_def_pk =
+        if set_default_standard_pk == true do
+          definition = Column.define_column(context, :id, :pk)
+          definition.sql <> ","
+        else
+          %{
+            sql: "",
+            config: config
+          }
+        end
+
+      columns_sql =
+        if Map.has_key?(query_config, :columns) == true do
+          acc= %{
+            sql: "",
+            table_schema: @default_table_schema
+          }
+          sql =
+          Enum.reduce(query_config.columns, acc, fn {column_name_key, column_config}, %{ sql: sql_acc, table_schema: table_schema } ->
+            col_def = Column.define_column(context, column_name_key, column_config)
+            # update the schema
+            schema = Map.put(table_schema, column_name_key, col_def.config)
+            comma = if sql_acc == "", do: "", else: ",\n "
+            sql = sql_acc <> comma <> schema.sql
+            %{ sql: sql, table_schema: schema}
+          end)
+          sql
+        else
+          %{ sql: "", table_schema:  @default_table_schema}
+        end
+
+      sql = "CREATE TABLE #{sql_table_name(context, plural_table_name)} ("
+
+          #{default_standard_pk}
+          #{columns_sql},
+          #{Column.define_column(context, :created_at, :datetime)},
+          #{Column.define_column(context, :last_update_on, %{type: :datetime, default: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"})},
+          #{Column.define_column(context, :is_deleted, :boolean)}
+          #{Column.define_column(context, :deleted_on, %{type: :datetime, default: "NULL", required: false})}}
         )
-      """
+      "
 
       # we append at the end of the list
       auto_schema_changes = [sql | context.auto_schema_changes]
@@ -152,34 +191,6 @@ defmodule DaoEngine do
   def sql_table_name(context, table_name) do
     plural_table_name = Inflex.pluralize(table_name)
     "`#{context.database_name}.#{plural_table_name}`"
-  end
-
-  def sql_create_column(context, column_name, type) do
-    # the context is important incase of different database types
-    # using different syntax or incase of a config that may specify different things
-    if is_binary(type) do
-      # e.g ":string_50"
-    else
-      # unknown data type
-      ""
-    end
-
-    sql_type =
-      case type do
-        :pk ->
-          "INT PRIMARY KEY"
-
-        :boolean ->
-          "INT"
-
-        :string ->
-          "VARCHAR (30)"
-
-        _ ->
-          nil
-      end
-
-    "#{column_name} #{sql_type}"
   end
 
   def try() do

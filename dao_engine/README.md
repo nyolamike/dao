@@ -73,8 +73,26 @@ scheduled for execution
 * create database
 
 Before running any sqls in the kwl_nodes or root nodes make sure to reverse the list before execution
-because during the process of generating the sql statements these lists are appended at the start for 
+because during the process of generating the sql statements these lists are appended at the start for
 perfomrace reasons.
+
+* feature -> Decribe table_name; to return table schema from the actual db, some modifications to get the schema from the dao way.
+
+* feature -> Drop table_name; to delete a table from the db and also schema
+
+* feature -> Alter Table table_name ADD column_name datatype;
+
+* feature -> Alter Table table_name DROP COLUMN column_name; removing a primary key table should remove all foreign keys
+if a config flag of propagate_pk_changes_on_alter
+
+## Data Types
+
+* done: boolean
+* done: string
+* done: pk
+* DECIMAL(3, 2) -> where 3 is the total digits and 2 the number of decimal places
+
+
 
 ## SQL Resources
 
