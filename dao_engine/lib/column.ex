@@ -34,7 +34,7 @@ defmodule Column do
       auto_increment: false,
       is_primary_key: is_primary_key,
       required: required,
-      sql: "TINYINT (#{size}) #{required_sql} #{default_sql}"
+      sql: "TINYINT(#{size}) #{required_sql} #{default_sql}"
     }
   end
 
@@ -47,9 +47,9 @@ defmodule Column do
     is_primary_key =
       if Map.has_key?(config, :is_primary_key), do: config.is_primary_key, else: false
 
-    # default is nil
-    default = if Map.has_key?(config, :default), do: config.default, else: nil
-    default_sql = if default != nil, do: "DEFAULT '#{default}'", else: ""
+    # default is ""
+    default = if Map.has_key?(config, :default), do: config.default, else: ""
+    default_sql = if default != "", do: "DEFAULT '#{default}'", else: ""
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, :required), do: config.required, else: false
     required_sql = if required == true, do: "NOT NULL", else: ""
@@ -104,15 +104,14 @@ defmodule Column do
     # default is nil
     default = if Map.has_key?(config, :default), do: config.default, else: nil
 
-    default_sql =
-      if default != nil, do: "DEFAULT #{default}", else: "DEFAULT CURRENT_TIMESTAMP"
+    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT CURRENT_TIMESTAMP"
 
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, :required), do: config.required, else: false
     required_sql = if required == true, do: "NOT NULL", else: ""
 
     %{
-      type: :string,
+      type: :datetime,
       size: size,
       default: default,
       auto_increment: false,
@@ -128,6 +127,7 @@ defmodule Column do
     config = Column.define(type)
 
     column_name = if is_atom(column_name), do: Atom.to_string(column_name), else: column_name
+
     %{
       sql: "#{column_name} #{config.sql}",
       config: config
