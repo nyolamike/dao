@@ -4,6 +4,18 @@ defmodule DaoEngineTest do
 
   alias DaoEngine, as: Dao
 
+  setup do
+    %{
+      "context" => %{
+        "database_type" => "mysql",
+        "database_name" => "grocerify",
+        "schema" => %{},
+        "auto_schema_changes" => [],
+        "auto_alter_db" => false
+      }
+    }
+  end
+
   test "indicates a word is plural or false" do
     query_config = %{}
     assert true == Dao.is_word_plural?(query_config, "shops")
@@ -12,8 +24,8 @@ defmodule DaoEngineTest do
     assert true == Dao.is_word_plural?(query_config, "aircraft")
     assert true == Dao.is_word_plural?(query_config, "deer")
     # forcing singluar on umbigious situations
-    assert false == Dao.is_word_plural?(%{is_list: false}, "aircraft")
-    assert false == Dao.is_word_plural?(%{is_list: false}, "deer")
+    assert false == Dao.is_word_plural?(%{"is_list" => false}, "aircraft")
+    assert false == Dao.is_word_plural?(%{"is_list" => false}, "deer")
   end
 
   test "handling unknown root command " do
@@ -30,16 +42,8 @@ defmodule DaoEngineTest do
     ]
   end
 
-
-  test "executes get query will not schedule tables to be auto created when auto_alter_db is set to false " do
-    context = %{
-      database_type: "mysql",
-      database_name: "grocerify",
-      schema: %{},
-      auto_schema_changes: [],
-      auto_alter_db: false
-    }
-
+  test "executes get query will not schedule tables to be auto created when auto_alter_db is set to false ",
+       %{"context" => context} do
     shop_get_cmd_node = [
       list_of_shops: [
         # a fixture
@@ -50,7 +54,7 @@ defmodule DaoEngineTest do
     aircraft_get_cmd_node = [
       biggest_aircraft: [
         aircraft: %{
-          is_list: false
+          "is_list" => false
         }
       ]
     ]
@@ -63,25 +67,28 @@ defmodule DaoEngineTest do
     results = Dao.execute(context, query)
 
     expected_results = %{
-      context: %{
-        auto_alter_db: false,
-        auto_schema_changes: [],
-        database_name: "grocerify",
-        database_type: "mysql",
-        schema: %{}
+      "context" => %{
+        "auto_alter_db" => false,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{}
       },
-      root_cmd_node_list: [
+      "root_cmd_node_list" => [
         get: [
           biggest_aircraft: [
             aircraft: %{
-              is_list: false,
-              sql: "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+              "is_list" => false,
+              "sql" => "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
             }
           ]
         ],
         get: [
           list_of_shops: [
-            shops: %{is_list: true, sql: "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"}
+            shops: %{
+              "is_list" => true,
+              "sql" => "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"
+            }
           ]
         ]
       ]
@@ -89,6 +96,4 @@ defmodule DaoEngineTest do
 
     assert expected_results == results
   end
-
-
 end

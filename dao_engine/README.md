@@ -92,8 +92,17 @@ if a config flag of propagate_pk_changes_on_alter
 * done: pk
 * DECIMAL(3, 2) -> where 3 is the total digits and 2 the number of decimal places
 
-
+## Json Config File dao.json
 
 ## SQL Resources
 
 * [https://www.youtube.com/watch?v=HXV3zeQKqGY](https://www.youtube.com/watch?v=HXV3zeQKqGY)
+
+
+on day04 we aslo sitch to using string keys instead of atoms, because the schema part comes from a user input
+this can be a potential DOS attack point since atoms are not garbage collected
+
+
+dao.json
+
+- auto_alter_db_in_production this flag should disable auto altering of db in production environment if db has already been previously created
