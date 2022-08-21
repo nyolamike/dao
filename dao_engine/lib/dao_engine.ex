@@ -84,7 +84,7 @@ defmodule DaoEngine do
 
     Enum.reduce(fixtures_kwl_node, result, fn {node_name_key, query_config}, result_acc ->
       str_node_name_key = Atom.to_string(node_name_key)
-      is_list = is_word_plural?(query_config, str_node_name_key)
+      is_list = Utils.is_word_plural?(query_config, str_node_name_key)
       # check if the table exists in the schema
       context =
         Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
@@ -102,36 +102,21 @@ defmodule DaoEngine do
     end)
   end
 
-  def is_word_plural?(query_config, word) do
-    single_word = Inflex.singularize(word)
-    plural_word = Inflex.pluralize(word)
-
-    cond do
-      single_word == plural_word ->
-        # special kind of word, we look into the config
-        if Map.has_key?(query_config, "is_list") do
-          query_config["is_list"] == true
-        else
-          true
-        end
-
-      single_word == word ->
-        false
-
-      # plural_word == word
-      true ->
-        true
-    end
-  end
-
   def load_config_from_file(project_path_slug) do
     base_path = get_env("BASE_ROOT_FILE_PATH")
     path = Path.join([base_path, project_path_slug, "dao.json"])
     path = Path.expand(path)
-    IO.inspect(path)
 
     with {:ok, body} <- File.read(path),
          {:ok, project_config} <- Jason.decode(body) do
+      # add expected runtime keys
+      project_config =
+        project_config
+        |> Utils.ensure_key("auto_schema_changes", [])
+        |> Utils.ensure_key("auto_allowed_names_queries_changes", [])
+        |> Utils.ensure_key("migrations", [])
+        |> Utils.ensure_key("seeds", [])
+
       {:ok, project_config}
     else
       {:error, reason} ->

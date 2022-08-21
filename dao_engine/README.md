@@ -106,3 +106,11 @@ this can be a potential DOS attack point since atoms are not garbage collected
 dao.json
 
 - auto_alter_db_in_production this flag should disable auto altering of db in production environment if db has already been previously created
+
+- accepted_named_queries: this one, in auto create mode will save the name of the query here if its not there
+this means that, if someone tries to alter the named queries to by pass restrictions, those unknown queries wont run
+
+- an api config, allows converting named queries into REST API calls
+
+- "schema_timestamps": true, - by default these are turned on, but if one does not want to have these accross all tables it can be set to false
+however any local  "dao@timestamps": false, will overrride this

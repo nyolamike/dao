@@ -18,28 +18,29 @@ defmodule DaoEngineTest do
 
   test "indicates a word is plural or false" do
     query_config = %{}
-    assert true == Dao.is_word_plural?(query_config, "shops")
-    assert false == Dao.is_word_plural?(query_config, "shop")
+    assert true == Utils.is_word_plural?(query_config, "shops")
+    assert false == Utils.is_word_plural?(query_config, "shop")
     # by default
-    assert true == Dao.is_word_plural?(query_config, "aircraft")
-    assert true == Dao.is_word_plural?(query_config, "deer")
+    assert true == Utils.is_word_plural?(query_config, "aircraft")
+    assert true == Utils.is_word_plural?(query_config, "deer")
     # forcing singluar on umbigious situations
-    assert false == Dao.is_word_plural?(%{"is_list" => false}, "aircraft")
-    assert false == Dao.is_word_plural?(%{"is_list" => false}, "deer")
+    assert false == Utils.is_word_plural?(%{"is_list" => false}, "aircraft")
+    assert false == Utils.is_word_plural?(%{"is_list" => false}, "deer")
   end
 
   test "handling unknown root command " do
-    shop_fixtures_kwl_node = [
-      # a fixture
-      shops: %{}
-    ]
+    # nyd: define the body of this test
+    # shop_fixtures_kwl_node = [
+    #   # a fixture
+    #   shops: %{}
+    # ]
 
-    query_object = [
-      get: [
-        list_of_shops: shop_fixtures_kwl_node
-      ],
-      unknown_cmd: false
-    ]
+    # query_object = [
+    #   get: [
+    #     list_of_shops: shop_fixtures_kwl_node
+    #   ],
+    #   unknown_cmd: false
+    # ]
   end
 
   test "executes get query will not schedule tables to be auto created when auto_alter_db is set to false ",

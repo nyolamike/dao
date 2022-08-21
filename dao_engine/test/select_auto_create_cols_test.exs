@@ -51,7 +51,7 @@ defmodule SelectAutoCreateColsTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "\n          CREATE TABLE `grocerify.employees` (\n          \n          emp_id INT(30) PRIMARY KEY,\n first_name VARCHAR (50) NOT NULL ,\n last_name VARCHAR (30)  ,\n status VARCHAR (10)  DEFAULT 'pending',\n          created_at DATETIME  DEFAULT CURRENT_TIMESTAMP,\n          last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n          is_deleted TINYINT(1) NOT NULL DEFAULT 0\n          deleted_on DATETIME  DEFAULT NULL}\n        )\n      "
+          "CREATE TABLE `grocerify.employees` (emp_id INT(30) PRIMARY KEY, first_name VARCHAR (50) NOT NULL, last_name VARCHAR (30), status VARCHAR (10)  DEFAULT 'pending', created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",

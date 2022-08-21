@@ -82,7 +82,7 @@ defmodule Column do
     required_sql = if required == true, do: "NOT NULL", else: ""
 
     %{
-      "type" => "string",
+      "type" => "timestamp",
       "size" => size,
       "default" => default,
       "auto_increment" => false,
@@ -118,6 +118,106 @@ defmodule Column do
       "is_primary_key" => is_primary_key,
       "required" => "",
       "sql" => "DATETIME #{required_sql} #{default_sql}"
+    }
+  end
+
+  def define("date"), do: define(%{"type" => "date"})
+
+  def define(%{"type" => "date"} = config) do
+    # default is false
+    is_primary_key =
+      if Map.has_key?(config, "is_primary_key"), do: config["is_primary_key"], else: false
+
+    # default is nil
+    default = if Map.has_key?(config, "default"), do: config["default"], else: nil
+
+    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT CURRENT_TIMESTAMP"
+
+    # nyd: define default for date as the current day
+    # default is false, meaning it allows nil/null values
+    required = if Map.has_key?(config, "required"), do: config["required"], else: false
+    required_sql = if required == true, do: "NOT NULL", else: ""
+
+    %{
+      "type" => "date",
+      "default" => default,
+      "auto_increment" => false,
+      "is_primary_key" => is_primary_key,
+      "required" => "",
+      "sql" => "DATETIME #{required_sql} #{default_sql}"
+    }
+  end
+
+  def define("float"), do: define(%{"type" => "decimal"})
+
+  def define(%{"type" => "float"} = config) do
+    define(%{config | "type" => "decimal"})
+  end
+
+  def define("decimal"), do: define(%{"type" => "decimal"})
+
+  def define(%{"type" => "decimal"} = config) do
+    # default is 12
+    size = if Map.has_key?(config, "size"), do: config["size"], else: 12
+    # default is false
+    is_primary_key =
+      if Map.has_key?(config, "is_primary_key"), do: config["is_primary_key"], else: false
+
+    # default is 0.0
+    default = if Map.has_key?(config, "default"), do: config["default"], else: nil
+
+    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT 0.0"
+
+    # default is false, meaning it allows nil/null values
+    required = if Map.has_key?(config, "required"), do: config["required"], else: false
+    required_sql = if required == true, do: "NOT NULL", else: ""
+
+    # default is 0.0
+    decimal_places =
+      if Map.has_key?(config, "decimal_places"), do: config["decimal_places"], else: 6
+
+    %{
+      "type" => "decimal",
+      "size" => size,
+      "decimal_places" => decimal_places,
+      "default" => default,
+      "auto_increment" => false,
+      "is_primary_key" => is_primary_key,
+      "required" => "",
+      "sql" => "DECIMAL(#{size},#{decimal_places}) #{required_sql} #{default_sql}"
+    }
+  end
+
+  def define("blob"), do: define(%{"type" => "blob"})
+
+  def define(%{"type" => "blob"} = config) do
+    # nyd: define blob data type implementation
+    %{}
+  end
+
+  def define("text"), do: define(%{"type" => "text"})
+
+  def define(%{"type" => "text"} = config) do
+    # default is false
+    is_primary_key =
+      if Map.has_key?(config, "is_primary_key"), do: config["is_primary_key"], else: false
+
+    # default is null
+    default = if Map.has_key?(config, "default"), do: config["default"], else: nil
+
+    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT NULL"
+
+    # default is false, meaning it allows nil/null values
+    required = if Map.has_key?(config, "required"), do: config["required"], else: false
+    required_sql = if required == true, do: "NOT NULL", else: ""
+
+    %{
+      "type" => "text",
+      "default" => default,
+      "auto_increment" => false,
+      "is_primary_key" => is_primary_key,
+      "required" => "",
+      "sql" => "TEXT #{required_sql} #{default_sql}"
     }
   end
 

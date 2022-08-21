@@ -53,7 +53,7 @@ defmodule GenSqlGetFixtureTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "\n          CREATE TABLE `grocerify.shops` (\n          id INT(30) PRIMARY KEY,\n          ,\n          created_at DATETIME  DEFAULT CURRENT_TIMESTAMP,\n          last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n          is_deleted TINYINT(1) NOT NULL DEFAULT 0\n          deleted_on DATETIME  DEFAULT NULL}\n        )\n      "
+          "CREATE TABLE `grocerify.shops` (id INT(30) PRIMARY KEY, created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -77,7 +77,15 @@ defmodule GenSqlGetFixtureTest do
               "sql" => "DATETIME  DEFAULT NULL",
               "type" => "datetime"
             },
-            "id" => "pk",
+            "id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) PRIMARY KEY",
+              "type" => "integer"
+            },
             "is_deleted" => %{
               "auto_increment" => false,
               "default" => nil,
@@ -113,7 +121,7 @@ defmodule GenSqlGetFixtureTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "\n          CREATE TABLE `grocerify.aircraft` (\n          id INT(30) PRIMARY KEY,\n          ,\n          created_at DATETIME  DEFAULT CURRENT_TIMESTAMP,\n          last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n          is_deleted TINYINT(1) NOT NULL DEFAULT 0\n          deleted_on DATETIME  DEFAULT NULL}\n        )\n      "
+          "CREATE TABLE `grocerify.aircraft` (id INT(30) PRIMARY KEY, created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -137,7 +145,15 @@ defmodule GenSqlGetFixtureTest do
               "sql" => "DATETIME  DEFAULT NULL",
               "type" => "datetime"
             },
-            "id" => "pk",
+            "id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) PRIMARY KEY",
+              "type" => "integer"
+            },
             "is_deleted" => %{
               "auto_increment" => false,
               "default" => nil,
