@@ -213,6 +213,8 @@ defmodule Table do
   def get_sql_remove_table(context, table_name) do
     table_name = sql_table_name(context, table_name)
     #nyd: must do staff with the conextext and fixtures and schema
+    #nyd: how does this affect our relationships, foreing keys etc,
+    #nyd: some of these commands may be solved over a long period of time
     "DROP TABLE #{table_name}"
   end
 
