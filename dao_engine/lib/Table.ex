@@ -204,4 +204,18 @@ defmodule Table do
 
     preprocess_config_table_def
   end
+
+  def get_table_structure_from_db() do
+    #nyd: this function may use a genserver cache for this or query agains the db directly
+    #DESCRIBE student;
+  end
+
+  def get_sql_remove_table(context, table_name) do
+    table_name = sql_table_name(context, table_name)
+    #nyd: must do staff with the conextext and fixtures and schema
+    "DROP TABLE #{table_name}"
+  end
+
+  #nyd ALTER TABLE student ADD gpa DECIMAL(3,2);
+  #nyd ALTER TABLE student DROP COLUMN gpa;
 end
