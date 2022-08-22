@@ -11,6 +11,7 @@ defmodule Table do
     plural_table_name = Inflex.pluralize(table_name)
 
     if context["schema"] |> Map.has_key?(plural_table_name) == false do
+      query_config = preprocess_query_config(context, query_config)
       gen_sql_table(context, table_name, query_config)
     else
       context
@@ -33,6 +34,9 @@ defmodule Table do
           "config" => %{}
         }
       end
+
+    primary_keys_line =
+      Column.define_columnx(context, "use_primary_keys", query_config["use_primary_keys"])
 
     table_schema =
       if set_default_standard_pk == true do
@@ -122,7 +126,11 @@ defmodule Table do
     table_col_def_sql = String.trim(table_col_def["sql"])
     default_table_schema_sql = default_table_schema["sql"]
     comma = if String.trim(default_table_schema_sql) == "", do: "", else: ", "
-    sql = sql <> table_col_def_sql <> comma <> default_table_schema_sql <> ")"
+    sql = sql <> table_col_def_sql <> comma <> default_table_schema_sql
+    primary_keys_line_sql = primary_keys_line["sql"]
+    comma = if String.trim(primary_keys_line_sql) == "", do: "", else: ", "
+    sql = sql <> comma <> primary_keys_line_sql
+    sql = sql <> ")"
 
     auto_schema_changes = context["auto_schema_changes"] ++ [sql]
     context = %{context | "auto_schema_changes" => auto_schema_changes}
@@ -137,5 +145,63 @@ defmodule Table do
   def sql_table_name(context, table_name) do
     plural_table_name = Inflex.pluralize(table_name)
     "`#{context["database_name"]}.#{plural_table_name}`"
+  end
+
+  def preprocess_query_config(context, config_table_def) do
+    # preprocess columns
+    query_config = %{
+      "columns" => %{}
+    }
+
+    #nyd: please note that in this step the "is_list", flag doesnot have any effect at the moment
+    {query_config, config_table_def} =
+      Utils.ensure_key(
+        config_table_def,
+        "is_list",
+        "is_list",
+        nil,
+        query_config
+      )
+
+    {query_config, config_table_def} =
+      Utils.ensure_key(
+        config_table_def,
+        "dao@use_default_pk",
+        "use_default_pk",
+        true,
+        query_config
+      )
+
+    {query_config, config_table_def} =
+      Utils.ensure_key(
+        config_table_def,
+        "dao@timestamps",
+        "use_standard_timestamps",
+        true,
+        query_config
+      )
+
+    # nyd: also consider supporting the using dao@primary_keys
+    {query_config, config_table_def} =
+      Utils.ensure_key(
+        config_table_def,
+        "dao@pks",
+        "use_primary_keys",
+        [],
+        query_config
+      )
+
+    #copy columns over
+    preprocess_config_table_def =
+    if Map.has_key?(config_table_def, "columns") do
+      %{ query_config | "columns" => config_table_def["columns"] }
+    else
+      Enum.reduce(config_table_def, query_config, fn {node_key, node_value}, acc_query_config ->
+        columns = Map.put(acc_query_config["columns"], node_key, node_value)
+        %{acc_query_config | "columns" => columns}
+      end)
+    end
+
+    preprocess_config_table_def
   end
 end

@@ -19,7 +19,11 @@ defmodule Utils do
     if Map.has_key?(map, key) == true do
       {map_to_modify |> Map.put(replace_key, map[key]), map |> Map.delete(key)}
     else
-      {map_to_modify |> Map.put(replace_key, default_value), map |> Map.delete(key)}
+      if Map.has_key?(map, replace_key) == true do
+        {map_to_modify |> Map.put(replace_key, map[replace_key]), map |> Map.delete(key)}
+      else
+        {map_to_modify |> Map.put(replace_key, default_value), map |> Map.delete(key)}
+      end
     end
   end
 

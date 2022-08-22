@@ -11,6 +11,37 @@ defmodule Column do
     }
   end
 
+  def define("integer"), do: define(%{"type" => "integer"})
+
+  def define("int"), do: define(%{"type" => "integer"})
+
+  def define(%{"type" => "int"} = config), do: define(%{config | "type" => "integer"})
+
+  def define(%{"type" => "integer"} = config) do
+    # default is 30
+    size = if Map.has_key?(config, "size"), do: config["size"], else: 30
+    # default is false
+    is_primary_key =
+      if Map.has_key?(config, "is_primary_key"), do: config["is_primary_key"], else: false
+
+    # default is 0
+    default = if Map.has_key?(config, "default"), do: config["default"], else: ""
+    default_sql = if default != "", do: "DEFAULT '#{default}'", else: ""
+    # default is o, meaning it allows nil/null values
+    required = if Map.has_key?(config, "required"), do: config["required"], else: false
+    required_sql = if required == true, do: "NOT NULL", else: ""
+
+    %{
+      "type" => "integer",
+      "size" => size,
+      "default" => default,
+      "auto_increment" => false,
+      "is_primary_key" => is_primary_key,
+      "required" => required,
+      "sql" => "INT(#{size}) #{required_sql} #{default_sql}"
+    }
+  end
+
   def define("boolean"), do: define(%{"type" => "boolean"})
 
   def define(%{"type" => "boolean"} = config) do
@@ -218,6 +249,15 @@ defmodule Column do
       "is_primary_key" => is_primary_key,
       "required" => "",
       "sql" => "TEXT #{required_sql} #{default_sql}"
+    }
+  end
+
+  def define_columnx(%{} = context, "use_primary_keys", list) when is_list(list) do
+    sql = if length(list) > 0, do: "PRIMARY KEY(#{Enum.join(list, ", ")})", else: ""
+
+    %{
+      "sql" => sql,
+      "config" => %{}
     }
   end
 

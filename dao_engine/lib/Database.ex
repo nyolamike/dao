@@ -27,33 +27,7 @@ defmodule Database do
     Enum.reduce(valid_schema, result, fn {config_plural_table_name, config_table_def},
                                          result_acc ->
       # preprocess columns
-      query_config = %{
-        "columns" => %{}
-      }
-
-      {query_config, config_table_def} =
-        Utils.ensure_key(
-          config_table_def,
-          "dao@use_default_pk",
-          "use_default_pk",
-          true,
-          query_config
-        )
-
-      {query_config, config_table_def} =
-        Utils.ensure_key(
-          config_table_def,
-          "dao@timestamps",
-          "use_standard_timestamps",
-          true,
-          query_config
-        )
-
-      preprocess_config_table_def =
-        Enum.reduce(config_table_def, query_config, fn {node_key, node_value}, acc_query_config ->
-          columns = Map.put(acc_query_config["columns"], node_key, node_value)
-          %{acc_query_config | "columns" => columns}
-        end)
+      preprocess_config_table_def = Table.preprocess_query_config(result_acc["context"], config_table_def)
 
       context =
         Table.gen_sql_table(
