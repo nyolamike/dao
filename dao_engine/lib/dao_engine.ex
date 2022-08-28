@@ -226,6 +226,14 @@ defmodule DaoEngine do
 
         %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
       else
+        # deleting some columns or data
+        {new_context, sql} = Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
+        #Utils.log("here", query_config)
+        fixture_config = %{
+          "sql" => sql,
+          "is_list" => true
+        }
+        %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
       end
     end)
   end

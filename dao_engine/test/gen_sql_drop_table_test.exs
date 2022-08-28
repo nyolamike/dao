@@ -10,7 +10,8 @@ defmodule GenSqlDropTableTest do
         "database_name" => "grocerify",
         "schema" => %{
           "students" => %{
-            "name" => "string"
+            "name" => "string",
+
           }
         },
         "auto_schema_changes" => [],
@@ -58,6 +59,27 @@ defmodule GenSqlDropTableTest do
     results = Dao.execute(context, query)
     epected_results = get_expected_results_gpa()
     assert epected_results == results
+  end
+
+  test "generate sql to drop coloumn from a table", %{"context" => context} do
+    # vidoe example
+    # ALTER TABLE student DROP COLUMN gpa;
+
+    schema = %{context["schema"] | "students" => Map.put(context["schema"]["students"], "gpa", "string")}
+    context  = %{context | "schema" => schema }
+    # nyd: find out how this affects relationships, pks and schema
+    query = [
+      delete: [
+        students_gpa_col: [
+          students: ["gpa"]
+        ]
+      ]
+    ]
+
+
+    results = Dao.execute(context, query)
+    expected_results =  get_expected_results_delete_gpa()
+    assert expected_results == results
   end
 
   def get_expected_results() do
@@ -117,6 +139,28 @@ defmodule GenSqlDropTableTest do
     }
   end
 
+  def get_expected_results_delete_gpa() do
+    %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => ["dao@skip: ALTER TABLE `grocerify.students` DROP COLUMN gpa"],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        delete: [
+          students_gpa_col: [
+            students: %{
+              "is_list" => true,
+              "sql" => "ALTER TABLE `grocerify.students` DROP COLUMN gpa"
+            }
+          ]
+        ]
+      ]
+    }
+  end
+
   test "generate sql to add a coloumn to a table considering some other variations", %{
     "context" => context
   } do
@@ -157,4 +201,7 @@ defmodule GenSqlDropTableTest do
     # results = Dao.execute(context, query)
     # IO.inspect(results)
   end
+
+
+
 end

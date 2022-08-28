@@ -289,5 +289,46 @@ defmodule Table do
     {context, sql}
   end
 
-  # nyd ALTER TABLE student DROP COLUMN gpa;
+  @spec get_sql_remove_columns(map(), binary(), [] ) :: {map(), binary()}
+  def get_sql_remove_columns(context, table_name, query_config) do
+    # please note that the setting "auto_alter_db" => true,
+    # doesnot afftect this because this is done via a query
+    # nyd: the only thing that can prevent this is authenticatiion
+
+    # nyd: must do staff with the conextext and fixtures and schema, also think about migrations
+    # nyd: how does this affect our relationships, foreing keys etc,
+    # nyd: some of these commands may be solved over a long period of time
+    db_table_name = sql_table_name(context, table_name)
+    # remove this columns from the table in the schema
+    {context, sql } =
+      if Map.has_key?(context["schema"], table_name) do
+        acc = %{
+          "table_schema" => context["schema"][table_name],
+          "sql" => "",
+          "errors" => %{}
+        }
+        process_results =
+        Enum.reduce(query_config, acc, fn column_name, acc ->
+          sql_acc = String.trim(acc["sql"])
+          table_schema = acc["table_schema"]
+          comma = if sql_acc == "", do: "", else: ", "
+          sql = sql_acc <> comma <> column_name
+          #nyd: throw an eeor here, attempting to delete a cloumn that does not exist
+          table_schema = Map.delete(table_schema, column_name)
+          %{"sql" => sql, "table_schema" => table_schema}
+        end)
+        schema = Map.put(context["schema"], table_name, process_results["table_schema"])
+        context = %{context | "schema" => schema}
+        sql = "ALTER TABLE #{db_table_name} DROP COLUMN " <> process_results["sql"]
+        {context, sql}
+      else
+        #nyd: throw an eeor here, attempting to delete from a table that does not exist
+        {context, ""}
+      end
+    # this command must go into the automatic schema changes
+    # it will be prefixed with dao@skip: so that it is not exectued twice, but will cause a migration to be recorded
+    auto_schema_changes = context["auto_schema_changes"] ++ ["dao@skip: " <> sql]
+    context = %{context | "auto_schema_changes" => auto_schema_changes}
+    {context, sql}
+  end
 end
