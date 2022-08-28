@@ -197,7 +197,8 @@ defmodule Column do
     # default is 0.0
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
 
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT 0.0"
+    # default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT 0.0"
+    default_sql = if default != nil, do: "DEFAULT #{default}", else: ""
 
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
@@ -272,5 +273,42 @@ defmodule Column do
       "sql" => "#{column_name} #{config["sql"]}",
       "config" => config
     }
+  end
+
+  def gen_sql_columns(context, plural_table_name, query_config) do
+    # checks to see if the columns in the query_config are all inside of the schema
+    if Map.has_key?(query_config, "columns") == true do
+      acc = %{
+        "sql" => "",
+        "table_schema" => context["schema"][plural_table_name],
+        "errors" => %{}
+      }
+
+      Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
+        sql_acc = String.trim(acc["sql"])
+        table_schema = acc["table_schema"]
+
+        if Map.has_key?(table_schema, column_name_key) == false do
+          col_def = Column.define_column(context, column_name_key, column_config)
+          # update the schema
+          schema = Map.put(table_schema, column_name_key, col_def["config"])
+          comma = if sql_acc == "", do: "", else: ", "
+          sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
+          %{"sql" => sql, "table_schema" => schema}
+        else
+          # add an error in case we are in the add situation
+          # nyd: detect if we are in the add situation
+          msg = "Column " <> column_name_key <> ", already exists"
+          errors = Map.put(acc["errors"], column_name_key, msg)
+          %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors}
+        end
+      end)
+    else
+      %{
+        "sql" => "",
+        "table_schema" => %{},
+        "errors" => %{}
+      }
+    end
   end
 end

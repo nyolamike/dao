@@ -57,4 +57,10 @@ defmodule Utils do
         true
     end
   end
+
+  def log(label, payLoad) do
+    IO.inspect("-----> Start #{label}: ----------------------------------")
+    IO.inspect(payLoad)
+    IO.inspect("-----> End #{label}: <-----------------------------------")
+  end
 end

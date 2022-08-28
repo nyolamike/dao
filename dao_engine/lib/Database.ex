@@ -27,7 +27,8 @@ defmodule Database do
     Enum.reduce(valid_schema, result, fn {config_plural_table_name, config_table_def},
                                          result_acc ->
       # preprocess columns
-      preprocess_config_table_def = Table.preprocess_query_config(result_acc["context"], config_table_def)
+      preprocess_config_table_def =
+        Table.preprocess_query_config(result_acc["context"], config_table_def)
 
       context =
         Table.gen_sql_table(
@@ -50,5 +51,4 @@ defmodule Database do
     # nyd: table names must be plural
     {:ok, context["schema"]}
   end
-
 end
