@@ -114,3 +114,6 @@ this means that, if someone tries to alter the named queries to by pass restrict
 
 - "schema_timestamps": true, - by default these are turned on, but if one does not want to have these accross all tables it can be set to false
 however any local  "dao@timestamps": false, will overrride this
+
+
+- WHen data is being inserted as an array without specifying columns into a table one needs to follow the alphabetic order of the columns

@@ -58,9 +58,22 @@ defmodule Utils do
     end
   end
 
-  def log(label, payLoad) do
-    IO.inspect("-----> Start #{label}: ----------------------------------")
-    IO.inspect(payLoad)
-    IO.inspect("-----> End #{label}: <-----------------------------------")
+  def log(label, payLoad, show_log \\ true) do
+    if show_log do
+      IO.inspect("-----> Start #{label}: ----------------------------------")
+      IO.inspect(payLoad)
+      IO.inspect("-----> End #{label}: <-----------------------------------")
+    end
+  end
+
+  def is_multi_dimensional?(item) do
+    cond do
+      is_list(item) ->
+        [h | _t] = item
+        is_list(h)
+
+      true ->
+        false
+    end
   end
 end

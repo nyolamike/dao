@@ -289,12 +289,12 @@ defmodule Column do
         table_schema = acc["table_schema"]
 
         if Map.has_key?(table_schema, column_name_key) == false do
-          col_def = Column.define_column(context, column_name_key, column_config)
+          col_def = define_column(context, column_name_key, column_config)
           # update the schema
           schema = Map.put(table_schema, column_name_key, col_def["config"])
           comma = if sql_acc == "", do: "", else: ", "
           sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
-          %{"sql" => sql, "table_schema" => schema}
+          %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"]}
         else
           # add an error in case we are in the add situation
           # nyd: detect if we are in the add situation
@@ -311,4 +311,76 @@ defmodule Column do
       }
     end
   end
+
+  def value_to_col_type(value) when is_integer(value), do: "integer"
+  def value_to_col_type(value) when is_float(value), do: "decimal"
+  def value_to_col_type(value) when is_boolean(value), do: "boolean"
+
+  def value_to_col_type(value) when is_binary(value) do
+    len = String.length(value)
+
+    cond do
+      len <= 100 -> "string"
+      true -> "text"
+    end
+  end
+
+  def value_to_col_type(value) when value, do: "boolean"
+  # nyd: value_to_col_type for dates specifiesd as either date objects or strings
+  # nyd: how to detect datetime values and timestamps
+  # nyd: how to detect blobs
+
+  def list_to_query_config(context, plural_table_name, query_config) do
+    # for example in insert queries
+    item_to_scan = hd(query_config)
+    item_to_scan = if is_list(item_to_scan), do: hd(item_to_scan), else: query_config
+    # Utils.log("query_config", item_to_scan)
+    # Utils.log("schema", context["schema"][plural_table_name])
+    # we need to match the entries of the array with table columns
+    acc = %{
+      next_col_no: 1,
+      cols: %{}
+    }
+
+    schema_cols =
+      Enum.reduce(context["schema"][plural_table_name], acc, fn {key, value}, acc ->
+        if String.starts_with?(key, "dao@") do
+          acc
+        else
+          cols = Map.put(acc.cols, acc.next_col_no, {key, value})
+          %{acc | next_col_no: acc.next_col_no + 1, cols: cols}
+        end
+      end)
+
+    # Utils.log("schema_cols", schema_cols)
+
+    matching_acc = %{
+      next_col_no: 1,
+      cols: %{},
+      schema_cols: schema_cols.cols
+    }
+
+    cols_from_array =
+      Enum.reduce(item_to_scan, matching_acc, fn value, acc ->
+        cols =
+          if Map.has_key?(acc.schema_cols, acc.next_col_no) do
+            {col_name, col_schema_def} = acc.schema_cols[acc.next_col_no]
+            Map.put(acc.cols, col_name, col_schema_def)
+          else
+            # we automatically attemp to create a new column
+            col_name = "col_#{acc.next_col_no}"
+            col_schema_def = Column.value_to_col_type(value)
+            Map.put(acc.cols, col_name, col_schema_def)
+          end
+
+        %{acc | next_col_no: acc.next_col_no + 1, cols: cols}
+      end)
+
+    # Utils.log("cols_from_array", cols_from_array)
+    cols_from_array.cols
+  end
+
+  def sql_value_format(value) when is_binary(value), do: "'#{value}'"
+  def sql_value_format(value) when is_map(value), do: "hi"
+  def sql_value_format(value), do: "#{value}"
 end

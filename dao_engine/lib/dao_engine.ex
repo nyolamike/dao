@@ -110,24 +110,92 @@ defmodule DaoEngine do
           context -> {context, ""}
         end
 
-      insert_cols_sql = ""
+      insert_cols_sql =
+        if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
+             Map.get(query_config, "dao@def_only") == true do
+          # no insert sql will be generated
+          ""
+        else
+          values_sql =
+            cond do
+              is_list(query_config) ->
+                [h | _t] = query_config
+
+                # remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
+                # so we need a way to keep our data organised accordingly
+                if is_list(h) do
+                  # we are dealing with an array of arrays
+                  Enum.reduce(h, "", fn array_of_values, sql_acc ->
+                    array_values_sql =
+                      Enum.reduce(array_of_values, "", fn value, sql_acc ->
+                        str_val = Column.sql_value_format(value)
+                        comma = if sql_acc == "", do: "", else: ", "
+                        sql_acc <> comma <> str_val
+                      end)
+
+                    "(#{array_values_sql})"
+                    sql_acc <> array_values_sql
+                  end)
+                else
+                  # the query_config is single array of values
+                  values_sql =
+                    Enum.reduce(query_config, "", fn value, sql_acc ->
+                      str_val = Column.sql_value_format(value)
+                      comma = if sql_acc == "", do: "", else: ", "
+                      sql_acc <> comma <> str_val
+                    end)
+
+                  "(#{values_sql})"
+                end
+
+              is_map(query_config) ->
+                values_sql =
+                  Enum.reduce(query_config, "", fn {_key, value}, sql_acc ->
+                    str_val = Column.sql_value_format(value)
+                    comma = if sql_acc == "", do: "", else: ", "
+                    sql_acc <> comma <> str_val
+                  end)
+
+                "(#{values_sql})"
+
+              true ->
+                throw("Unknown query config: gen values sql")
+            end
+
+          values_sql
+        end
+
+      # Utils.log("insert_cols_sql", insert_cols_sql, is_list(query_config))
 
       cond do
         insert_cols_sql != "" ->
           # we have some data to insert
 
-          sql = "INSERT INTO #{Table.sql_table_name(result_acc["context"], str_node_name_key)}"
-          sql = sql <> " SET "
+          sql = "INSERT INTO #{Table.sql_table_name(context, str_node_name_key)} VALUES"
 
-          #nyd: the auto commented out alter cmd needs to be renable
-          #as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
+          sql =
+            if is_list(query_config), do: sql <> insert_cols_sql, else: sql <> "something else"
+
+          # nyd: the auto commented out alter cmd needs to be renable
+          # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
 
           fixture_config = %{
             "sql" => sql,
             "is_list" => is_list
           }
 
+          # Utils.log("any_alter_table_sql", any_alter_table_sql, is_list(query_config))
+
+          auto_schema_changes =
+            Enum.reduce(context["auto_schema_changes"], [], fn item, acc ->
+              look_for = "dao@skip: " <> any_alter_table_sql
+              temp_sql = if look_for == item, do: any_alter_table_sql, else: item
+              acc ++ [temp_sql]
+            end)
+
+          context = %{context | "auto_schema_changes" => auto_schema_changes}
           %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
         insert_cols_sql == "" && any_alter_table_sql != "" ->
           # there is no data to be inserted, but we have some schema changes
           # then these are gona be fixture because they are the only queries in the root command
@@ -137,6 +205,7 @@ defmodule DaoEngine do
           }
 
           %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
         insert_cols_sql == "" && any_alter_table_sql == "" ->
           fixture_config = %{
             "sql" => "",
@@ -227,12 +296,15 @@ defmodule DaoEngine do
         %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
       else
         # deleting some columns or data
-        {new_context, sql} = Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
-        #Utils.log("here", query_config)
+        {new_context, sql} =
+          Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
+
+        # Utils.log("here", query_config)
         fixture_config = %{
           "sql" => sql,
           "is_list" => true
         }
+
         %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
       end
     end)

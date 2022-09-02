@@ -1,5 +1,5 @@
 defmodule Table do
-  @spec gen_sql_ensure_table_exists(map(), binary(), map()) :: map() | { map(), binary()}
+  @spec gen_sql_ensure_table_exists(map(), binary(), map()) :: map() | {map(), binary()}
   def gen_sql_ensure_table_exists(
         %{"auto_alter_db" => false} = context,
         _table_name,
@@ -15,10 +15,24 @@ defmodule Table do
       gen_sql_table(context, table_name, query_config)
     else
       # ensure that it has all the columns specified in the query config
-      query_config = preprocess_query_config(context, query_config)
-      #Utils.log("query_config", query_config)
-      gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, query_config)
-      # Utils.log("gen_columns_sql", gen_columns_sql)
+      proc_query_config =
+        cond do
+          is_list(query_config) ->
+            query_config_from_list =
+              Column.list_to_query_config(context, plural_table_name, query_config)
+
+            preprocess_query_config(context, query_config_from_list)
+
+          is_map(query_config) ->
+            preprocess_query_config(context, query_config)
+
+          true ->
+            throw("Unknown query config: ensuring all columns exist")
+        end
+
+      # Utils.log("proc_query_config", proc_query_config, is_list(query_config))
+      gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
+      # Utils.log("gen_columns_sql", gen_columns_sql, is_list(query_config))
       gen_sql_cols(context, plural_table_name, gen_columns_sql)
     end
   end
@@ -157,7 +171,7 @@ defmodule Table do
       # it will be prefixed with dao@skip: so that it is not exectued twice, but will cause a migration to be recorded
       auto_schema_changes = context["auto_schema_changes"] ++ ["dao@skip: " <> sql]
       context = %{context | "auto_schema_changes" => auto_schema_changes}
-      #Utils.log("generated_columns_sql", generated_columns_sql)
+      # Utils.log("generated_columns_sql", generated_columns_sql)
       schema =
         Map.put(context["schema"], plural_table_name, generated_columns_sql["table_schema"])
 
@@ -174,11 +188,18 @@ defmodule Table do
     "`#{context["database_name"]}.#{plural_table_name}`"
   end
 
+  def preprocess_query_config(context, config_table_def) when is_list(config_table_def) do
+    preprocess_query_config(context, %{})
+  end
+
   def preprocess_query_config(context, config_table_def) do
     # preprocess columns
     query_config = %{
       "columns" => %{}
     }
+
+    # delete dao@def_only
+    config_table_def = Map.delete(config_table_def, "dao@def_only")
 
     # nyd: please note that in this step the "is_list", flag doesnot have any effect at the moment
     {query_config, config_table_def} =
@@ -241,6 +262,7 @@ defmodule Table do
     preprocess_config_table_def
   end
 
+  @spec get_table_structure_from_db :: nil
   def get_table_structure_from_db() do
     # nyd: this function may use a genserver cache for this or query agains the db directly
     # DESCRIBE student;
@@ -289,7 +311,7 @@ defmodule Table do
     {context, sql}
   end
 
-  @spec get_sql_remove_columns(map(), binary(), [] ) :: {map(), binary()}
+  @spec get_sql_remove_columns(map(), binary(), []) :: {map(), binary()}
   def get_sql_remove_columns(context, table_name, query_config) do
     # please note that the setting "auto_alter_db" => true,
     # doesnot afftect this because this is done via a query
@@ -300,31 +322,34 @@ defmodule Table do
     # nyd: some of these commands may be solved over a long period of time
     db_table_name = sql_table_name(context, table_name)
     # remove this columns from the table in the schema
-    {context, sql } =
+    {context, sql} =
       if Map.has_key?(context["schema"], table_name) do
         acc = %{
           "table_schema" => context["schema"][table_name],
           "sql" => "",
           "errors" => %{}
         }
+
         process_results =
-        Enum.reduce(query_config, acc, fn column_name, acc ->
-          sql_acc = String.trim(acc["sql"])
-          table_schema = acc["table_schema"]
-          comma = if sql_acc == "", do: "", else: ", "
-          sql = sql_acc <> comma <> column_name
-          #nyd: throw an eeor here, attempting to delete a cloumn that does not exist
-          table_schema = Map.delete(table_schema, column_name)
-          %{"sql" => sql, "table_schema" => table_schema}
-        end)
+          Enum.reduce(query_config, acc, fn column_name, acc ->
+            sql_acc = String.trim(acc["sql"])
+            table_schema = acc["table_schema"]
+            comma = if sql_acc == "", do: "", else: ", "
+            sql = sql_acc <> comma <> column_name
+            # nyd: throw an eeor here, attempting to delete a cloumn that does not exist
+            table_schema = Map.delete(table_schema, column_name)
+            %{"sql" => sql, "table_schema" => table_schema}
+          end)
+
         schema = Map.put(context["schema"], table_name, process_results["table_schema"])
         context = %{context | "schema" => schema}
         sql = "ALTER TABLE #{db_table_name} DROP COLUMN " <> process_results["sql"]
         {context, sql}
       else
-        #nyd: throw an eeor here, attempting to delete from a table that does not exist
+        # nyd: throw an eeor here, attempting to delete from a table that does not exist
         {context, ""}
       end
+
     # this command must go into the automatic schema changes
     # it will be prefixed with dao@skip: so that it is not exectued twice, but will cause a migration to be recorded
     auto_schema_changes = context["auto_schema_changes"] ++ ["dao@skip: " <> sql]

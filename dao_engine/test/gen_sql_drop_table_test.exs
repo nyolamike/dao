@@ -10,8 +10,7 @@ defmodule GenSqlDropTableTest do
         "database_name" => "grocerify",
         "schema" => %{
           "students" => %{
-            "name" => "string",
-
+            "name" => "string"
           }
         },
         "auto_schema_changes" => [],
@@ -50,7 +49,8 @@ defmodule GenSqlDropTableTest do
               "type" => "float",
               "size" => 3,
               "decimal_places" => 2
-            }
+            },
+            "dao@def_only" => true
           }
         ]
       ]
@@ -65,8 +65,12 @@ defmodule GenSqlDropTableTest do
     # vidoe example
     # ALTER TABLE student DROP COLUMN gpa;
 
-    schema = %{context["schema"] | "students" => Map.put(context["schema"]["students"], "gpa", "string")}
-    context  = %{context | "schema" => schema }
+    schema = %{
+      context["schema"]
+      | "students" => Map.put(context["schema"]["students"], "gpa", "string")
+    }
+
+    context = %{context | "schema" => schema}
     # nyd: find out how this affects relationships, pks and schema
     query = [
       delete: [
@@ -76,9 +80,8 @@ defmodule GenSqlDropTableTest do
       ]
     ]
 
-
     results = Dao.execute(context, query)
-    expected_results =  get_expected_results_delete_gpa()
+    expected_results = get_expected_results_delete_gpa()
     assert expected_results == results
   end
 
@@ -201,7 +204,4 @@ defmodule GenSqlDropTableTest do
     # results = Dao.execute(context, query)
     # IO.inspect(results)
   end
-
-
-
 end
