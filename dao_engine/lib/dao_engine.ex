@@ -111,58 +111,66 @@ defmodule DaoEngine do
         end
 
       insert_cols_sql =
+
         if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
              Map.get(query_config, "dao@def_only") == true do
           # no insert sql will be generated
           ""
         else
-          values_sql =
-            cond do
-              is_list(query_config) ->
-                [h | _t] = query_config
+          sql = "INSERT INTO #{Table.sql_table_name(context, str_node_name_key)}"
+          cond do
+            is_list(query_config) ->
+              [h | _t] = query_config
 
-                # remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
-                # so we need a way to keep our data organised accordingly
-                if is_list(h) do
-                  # we are dealing with an array of arrays
-                  Enum.reduce(h, "", fn array_of_values, sql_acc ->
-                    array_values_sql =
-                      Enum.reduce(array_of_values, "", fn value, sql_acc ->
-                        str_val = Column.sql_value_format(value)
-                        comma = if sql_acc == "", do: "", else: ", "
-                        sql_acc <> comma <> str_val
-                      end)
-
-                    "(#{array_values_sql})"
-                    sql_acc <> array_values_sql
-                  end)
-                else
-                  # the query_config is single array of values
-                  values_sql =
-                    Enum.reduce(query_config, "", fn value, sql_acc ->
+              # remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
+              # so we need a way to keep our data organised accordingly
+              gen_values_sql =
+              if is_list(h) do
+                # we are dealing with an array of arrays
+                Enum.reduce(h, "", fn array_of_values, sql_acc ->
+                  array_values_sql =
+                    Enum.reduce(array_of_values, "", fn value, sql_acc ->
                       str_val = Column.sql_value_format(value)
                       comma = if sql_acc == "", do: "", else: ", "
                       sql_acc <> comma <> str_val
                     end)
 
-                  "(#{values_sql})"
-                end
-
-              is_map(query_config) ->
+                  "(#{array_values_sql})"
+                  sql_acc <> array_values_sql
+                end)
+              else
+                # the query_config is single array of values
                 values_sql =
-                  Enum.reduce(query_config, "", fn {_key, value}, sql_acc ->
+                  Enum.reduce(query_config, "", fn value, sql_acc ->
                     str_val = Column.sql_value_format(value)
                     comma = if sql_acc == "", do: "", else: ", "
                     sql_acc <> comma <> str_val
                   end)
 
                 "(#{values_sql})"
+              end
+              "#{sql} VALUES#{gen_values_sql}"
+            is_map(query_config) ->
+              acc_4_map = %{
+                "col_names_sql" => "",
+                "col_vals_sql" => ""
+              }
+              gen_values_sql =
+                Enum.reduce(query_config, acc_4_map, fn {key, value}, acc ->
+                  col_comma = if acc["col_names_sql"] == "", do: "", else: ", "
+                  cols_sql_acc = acc["col_names_sql"] <> col_comma <> key
 
-              true ->
-                throw("Unknown query config: gen values sql")
-            end
+                  str_val = Column.sql_value_format(value)
+                  comma = if acc["col_vals_sql"] == "", do: "", else: ", "
+                  sql_acc =  acc["col_vals_sql"] <> comma <> str_val
+                  %{acc | "col_names_sql" => cols_sql_acc, "col_vals_sql" => sql_acc}
+                end)
 
-          values_sql
+                "#{sql}(#{gen_values_sql["col_names_sql"]}) VALUES(#{gen_values_sql["col_vals_sql"]})"
+
+            true ->
+              throw("Unknown query config: gen values sql")
+          end
         end
 
       # Utils.log("insert_cols_sql", insert_cols_sql, is_list(query_config))
@@ -170,11 +178,7 @@ defmodule DaoEngine do
       cond do
         insert_cols_sql != "" ->
           # we have some data to insert
-
-          sql = "INSERT INTO #{Table.sql_table_name(context, str_node_name_key)} VALUES"
-
-          sql =
-            if is_list(query_config), do: sql <> insert_cols_sql, else: sql <> "something else"
+          sql = insert_cols_sql
 
           # nyd: the auto commented out alter cmd needs to be renable
           # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "

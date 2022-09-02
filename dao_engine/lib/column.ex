@@ -253,6 +253,10 @@ defmodule Column do
     }
   end
 
+  def define(probably_a_value) do
+    probably_a_value |> value_to_col_type() |> define()
+  end
+
   def define_columnx(%{} = context, "use_primary_keys", list) when is_list(list) do
     sql = if length(list) > 0, do: "PRIMARY KEY(#{Enum.join(list, ", ")})", else: ""
 
