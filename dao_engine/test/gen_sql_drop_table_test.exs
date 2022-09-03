@@ -122,8 +122,9 @@ defmodule GenSqlDropTableTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 3,
-              "sql" => "DECIMAL(3,2)  ",
-              "type" => "decimal"
+              "sql" => "DECIMAL(3,2)",
+              "type" => "decimal",
+              "unique" => false
             },
             "name" => "string"
           }

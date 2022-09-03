@@ -27,8 +27,9 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => false,
           "required" => false,
           "size" => 30,
-          "sql" => "VARCHAR (30)  ",
-          "type" => "string"
+          "sql" => "VARCHAR(30)",
+          "type" => "string",
+          "unique" => false
         },
         "name" => %{
           "auto_increment" => false,
@@ -36,8 +37,9 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => false,
           "required" => false,
           "size" => 30,
-          "sql" => "VARCHAR (30)  ",
-          "type" => "string"
+          "sql" => "VARCHAR(30)",
+          "type" => "string",
+          "unique" => false
         },
         "student_id" => %{
           "auto_increment" => true,
@@ -45,7 +47,7 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => true,
           "required" => false,
           "size" => 30,
-          "sql" => "INT(30) PRIMARY KEY",
+          "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
           "type" => "integer"
         }
       }
@@ -54,7 +56,7 @@ defmodule DaoStudentSchemaSqlTest do
 
   def expeted_changes_sql() do
     [
-      "CREATE TABLE `company_book.students` (major VARCHAR (30), name VARCHAR (30), student_id INT(30) PRIMARY KEY)"
+      "CREATE TABLE `company_book.students` (major VARCHAR(30), name VARCHAR(30), student_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY)"
     ]
   end
 
@@ -81,8 +83,9 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => false,
           "required" => false,
           "size" => 30,
-          "sql" => "VARCHAR (30)  ",
-          "type" => "string"
+          "sql" => "VARCHAR(30)",
+          "type" => "string",
+          "unique" => false
         },
         "name" => %{
           "auto_increment" => false,
@@ -90,8 +93,9 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => false,
           "required" => false,
           "size" => 30,
-          "sql" => "VARCHAR (30)  ",
-          "type" => "string"
+          "sql" => "VARCHAR(30)",
+          "type" => "string",
+          "unique" => false
         },
         "student_id" => %{
           "auto_increment" => false,
@@ -99,8 +103,9 @@ defmodule DaoStudentSchemaSqlTest do
           "is_primary_key" => false,
           "required" => false,
           "size" => 30,
-          "sql" => "INT(30)  ",
-          "type" => "integer"
+          "sql" => "INT(30)",
+          "type" => "integer",
+          "unique" => false
         }
       }
     }
@@ -108,7 +113,7 @@ defmodule DaoStudentSchemaSqlTest do
 
   def expeted_changes_v_1_1_sql() do
     [
-      "CREATE TABLE `company_book.students` (major VARCHAR (30), name VARCHAR (30), student_id INT(30), PRIMARY KEY(student_id))"
+      "CREATE TABLE `company_book.students` (major VARCHAR(30), name VARCHAR(30), student_id INT(30), PRIMARY KEY(student_id))"
     ]
   end
 end

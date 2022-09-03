@@ -7,7 +7,7 @@ defmodule Column do
       "auto_increment" => true,
       "is_primary_key" => true,
       "required" => false,
-      "sql" => "INT(30) PRIMARY KEY"
+      "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY"
     }
   end
 
@@ -26,19 +26,33 @@ defmodule Column do
 
     # default is 0
     default = if Map.has_key?(config, "default"), do: config["default"], else: ""
-    default_sql = if default != "", do: "DEFAULT '#{default}'", else: ""
+    default_sql = if default != "", do: " DEFAULT '#{default}'", else: ""
     # default is o, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
+
+    # nyd: validation of these column properties from user input
 
     %{
       "type" => "integer",
       "size" => size,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => required,
-      "sql" => "INT(#{size}) #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim("INT(#{size})#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
     }
   end
 
@@ -53,19 +67,33 @@ defmodule Column do
 
     # default is 0/false
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT 0"
+    default_sql = if default != nil, do: " DEFAULT #{default}", else: " DEFAULT 0"
     # default is true, meaning it does not allow nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: true
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
-      "type" => "string",
+      "type" => "boolean",
       "size" => size,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => required,
-      "sql" => "TINYINT(#{size}) #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim(
+          "TINYINT(#{size})#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}"
+        )
     }
   end
 
@@ -80,19 +108,33 @@ defmodule Column do
 
     # default is ""
     default = if Map.has_key?(config, "default"), do: config["default"], else: ""
-    default_sql = if default != "", do: "DEFAULT '#{default}'", else: ""
+    default_sql = if default != "", do: " DEFAULT '#{default}'", else: ""
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "string",
       "size" => size,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => required,
-      "sql" => "VARCHAR (#{size}) #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim(
+          "VARCHAR(#{size})#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}"
+        )
     }
   end
 
@@ -107,19 +149,36 @@ defmodule Column do
 
     # default is 0
     default = if Map.has_key?(config, "default"), do: config["default"], else: 0
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT (UNIX_TIMESTAMP())"
+
+    default_sql =
+      if default != nil, do: " DEFAULT #{default}", else: " DEFAULT (UNIX_TIMESTAMP())"
+
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "timestamp",
       "size" => size,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => required,
-      "sql" => "BIGINT (#{size}) #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim(
+          "BIGINT(#{size})#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}"
+        )
     }
   end
 
@@ -135,20 +194,32 @@ defmodule Column do
     # default is nil
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
 
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT CURRENT_TIMESTAMP"
+    default_sql = if default != nil, do: " DEFAULT #{default}", else: " DEFAULT CURRENT_TIMESTAMP"
 
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "datetime",
       "size" => size,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => "",
-      "sql" => "DATETIME #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim("DATETIME#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
     }
   end
 
@@ -162,20 +233,32 @@ defmodule Column do
     # default is nil
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
 
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT CURRENT_TIMESTAMP"
+    default_sql = if default != nil, do: " DEFAULT #{default}", else: " DEFAULT CURRENT_TIMESTAMP"
 
     # nyd: define default for date as the current day
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "date",
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => "",
-      "sql" => "DATETIME #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim("DATETIME#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
     }
   end
 
@@ -198,25 +281,39 @@ defmodule Column do
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
 
     # default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT 0.0"
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: ""
+    default_sql = if default != nil, do: " DEFAULT #{default}", else: ""
 
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
 
     # default is 0.0
     decimal_places =
       if Map.has_key?(config, "decimal_places"), do: config["decimal_places"], else: 6
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "decimal",
       "size" => size,
       "decimal_places" => decimal_places,
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => "",
-      "sql" => "DECIMAL(#{size},#{decimal_places}) #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim(
+          "DECIMAL(#{size},#{decimal_places})#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}"
+        )
     }
   end
 
@@ -237,19 +334,31 @@ defmodule Column do
     # default is null
     default = if Map.has_key?(config, "default"), do: config["default"], else: nil
 
-    default_sql = if default != nil, do: "DEFAULT #{default}", else: "DEFAULT NULL"
+    default_sql = if default != nil, do: " DEFAULT #{default}", else: " DEFAULT NULL"
 
     # default is false, meaning it allows nil/null values
     required = if Map.has_key?(config, "required"), do: config["required"], else: false
-    required_sql = if required == true, do: "NOT NULL", else: ""
+    required_sql = if required == true, do: " NOT NULL", else: ""
+
+    # unique default value is false which produces an empty sql
+    unique = if Map.has_key?(config, "unique"), do: config["unique"], else: false
+    unique_sql = if unique == true, do: " UNIQUE", else: ""
+
+    # auto increment default value is false which produces an empty sql
+    auto_increment =
+      if Map.has_key?(config, "auto_increment"), do: config["auto_increment"], else: false
+
+    auto_increment_sql = if auto_increment == true, do: " AUTO_INCREMENT", else: ""
 
     %{
       "type" => "text",
       "default" => default,
-      "auto_increment" => false,
+      "auto_increment" => auto_increment,
       "is_primary_key" => is_primary_key,
       "required" => "",
-      "sql" => "TEXT #{required_sql} #{default_sql}"
+      "unique" => unique,
+      "sql" =>
+        String.trim("TEXT#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
     }
   end
 

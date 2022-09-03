@@ -51,7 +51,7 @@ defmodule SelectAutoCreateColsTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.employees` (emp_id INT(30) PRIMARY KEY, first_name VARCHAR (50) NOT NULL, last_name VARCHAR (30), status VARCHAR (10)  DEFAULT 'pending', created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
+          "CREATE TABLE `grocerify.employees` (emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(30), status VARCHAR(10) DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -63,8 +63,9 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             },
             "deleted_on" => %{
               "auto_increment" => false,
@@ -72,26 +73,9 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT NULL",
-              "type" => "datetime"
-            },
-            "is_deleted" => %{
-              "auto_increment" => false,
-              "default" => nil,
-              "is_primary_key" => false,
-              "required" => true,
-              "size" => 1,
-              "sql" => "TINYINT(1) NOT NULL DEFAULT 0",
-              "type" => "string"
-            },
-            "last_update_on" => %{
-              "auto_increment" => false,
-              "default" => "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-              "is_primary_key" => false,
-              "required" => "",
-              "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT NULL",
+              "type" => "datetime",
+              "unique" => false
             },
             "emp_id" => %{
               "auto_increment" => true,
@@ -99,7 +83,7 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => true,
               "required" => false,
               "size" => 30,
-              "sql" => "INT(30) PRIMARY KEY",
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
               "type" => "integer"
             },
             "first_name" => %{
@@ -108,8 +92,19 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => false,
               "required" => true,
               "size" => 50,
-              "sql" => "VARCHAR (50) NOT NULL ",
-              "type" => "string"
+              "sql" => "VARCHAR(50) NOT NULL",
+              "type" => "string",
+              "unique" => false
+            },
+            "is_deleted" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => true,
+              "size" => 1,
+              "sql" => "TINYINT(1) NOT NULL DEFAULT 0",
+              "type" => "boolean",
+              "unique" => false
             },
             "last_name" => %{
               "auto_increment" => false,
@@ -117,8 +112,19 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => false,
               "required" => false,
               "size" => 30,
-              "sql" => "VARCHAR (30)  ",
-              "type" => "string"
+              "sql" => "VARCHAR(30)",
+              "type" => "string",
+              "unique" => false
+            },
+            "last_update_on" => %{
+              "auto_increment" => false,
+              "default" => "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+              "is_primary_key" => false,
+              "required" => "",
+              "size" => 60,
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             },
             "status" => %{
               "auto_increment" => false,
@@ -126,8 +132,9 @@ defmodule SelectAutoCreateColsTest do
               "is_primary_key" => false,
               "required" => false,
               "size" => 10,
-              "sql" => "VARCHAR (10)  DEFAULT 'pending'",
-              "type" => "string"
+              "sql" => "VARCHAR(10) DEFAULT 'pending'",
+              "type" => "string",
+              "unique" => false
             }
           }
         }

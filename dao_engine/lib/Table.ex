@@ -12,7 +12,7 @@ defmodule Table do
 
     if context["schema"] |> Map.has_key?(plural_table_name) == false do
       query_config = preprocess_query_config(context, query_config)
-      gen_sql_table(context, table_name, query_config)
+      gen_sql_table(context, plural_table_name, query_config)
     else
       # ensure that it has all the columns specified in the query config
       proc_query_config =
@@ -144,8 +144,14 @@ defmodule Table do
 
     table_col_def_sql = String.trim(table_col_def["sql"])
     default_table_schema_sql = default_table_schema["sql"]
-    comma = if String.trim(default_table_schema_sql) == "", do: "", else: ", "
-    sql = sql <> table_col_def_sql <> comma <> default_table_schema_sql
+
+    comma =
+      if String.trim(default_table_schema_sql) == "" || String.trim(table_col_def_sql) == "",
+        do: "",
+        else: ", "
+
+    first_comma = if String.trim(default_standard_col_def_pk["sql"]) == "", do: "", else: ", "
+    sql = sql <> first_comma <> table_col_def_sql <> comma <> default_table_schema_sql
     primary_keys_line_sql = primary_keys_line["sql"]
     comma = if String.trim(primary_keys_line_sql) == "", do: "", else: ", "
     sql = sql <> comma <> primary_keys_line_sql

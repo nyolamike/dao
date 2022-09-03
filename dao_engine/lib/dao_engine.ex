@@ -111,13 +111,13 @@ defmodule DaoEngine do
         end
 
       insert_cols_sql =
-
         if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
              Map.get(query_config, "dao@def_only") == true do
           # no insert sql will be generated
           ""
         else
           sql = "INSERT INTO #{Table.sql_table_name(context, str_node_name_key)}"
+
           cond do
             is_list(query_config) ->
               [h | _t] = query_config
@@ -125,48 +125,58 @@ defmodule DaoEngine do
               # remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
               # so we need a way to keep our data organised accordingly
               gen_values_sql =
-              if is_list(h) do
-                # we are dealing with an array of arrays
-                Enum.reduce(h, "", fn array_of_values, sql_acc ->
-                  array_values_sql =
-                    Enum.reduce(array_of_values, "", fn value, sql_acc ->
+                if is_list(h) do
+                  # we are dealing with an array of arrays
+                  Enum.reduce(h, "", fn array_of_values, sql_acc ->
+                    array_values_sql =
+                      Enum.reduce(array_of_values, "", fn value, sql_acc ->
+                        str_val = Column.sql_value_format(value)
+                        comma = if sql_acc == "", do: "", else: ", "
+                        sql_acc <> comma <> str_val
+                      end)
+
+                    "(#{array_values_sql})"
+                    sql_acc <> array_values_sql
+                  end)
+                else
+                  # the query_config is single array of values
+                  values_sql =
+                    Enum.reduce(query_config, "", fn value, sql_acc ->
                       str_val = Column.sql_value_format(value)
                       comma = if sql_acc == "", do: "", else: ", "
                       sql_acc <> comma <> str_val
                     end)
 
-                  "(#{array_values_sql})"
-                  sql_acc <> array_values_sql
-                end)
-              else
-                # the query_config is single array of values
-                values_sql =
-                  Enum.reduce(query_config, "", fn value, sql_acc ->
-                    str_val = Column.sql_value_format(value)
-                    comma = if sql_acc == "", do: "", else: ", "
-                    sql_acc <> comma <> str_val
-                  end)
+                  "(#{values_sql})"
+                end
 
-                "(#{values_sql})"
-              end
               "#{sql} VALUES#{gen_values_sql}"
+
             is_map(query_config) ->
               acc_4_map = %{
                 "col_names_sql" => "",
                 "col_vals_sql" => ""
               }
+
               gen_values_sql =
                 Enum.reduce(query_config, acc_4_map, fn {key, value}, acc ->
-                  col_comma = if acc["col_names_sql"] == "", do: "", else: ", "
-                  cols_sql_acc = acc["col_names_sql"] <> col_comma <> key
+                  skip = ["dao@def_only"]
 
-                  str_val = Column.sql_value_format(value)
-                  comma = if acc["col_vals_sql"] == "", do: "", else: ", "
-                  sql_acc =  acc["col_vals_sql"] <> comma <> str_val
-                  %{acc | "col_names_sql" => cols_sql_acc, "col_vals_sql" => sql_acc}
+                  if key in skip do
+                    acc
+                  else
+                    col_comma = if acc["col_names_sql"] == "", do: "", else: ", "
+                    cols_sql_acc = acc["col_names_sql"] <> col_comma <> key
+
+                    str_val = Column.sql_value_format(value)
+                    comma = if acc["col_vals_sql"] == "", do: "", else: ", "
+                    sql_acc = acc["col_vals_sql"] <> comma <> str_val
+                    %{acc | "col_names_sql" => cols_sql_acc, "col_vals_sql" => sql_acc}
+                  end
                 end)
 
-                "#{sql}(#{gen_values_sql["col_names_sql"]}) VALUES(#{gen_values_sql["col_vals_sql"]})"
+              # nyd: throw an error if there are no columns or values
+              "#{sql}(#{gen_values_sql["col_names_sql"]}) VALUES(#{gen_values_sql["col_vals_sql"]})"
 
             true ->
               throw("Unknown query config: gen values sql")

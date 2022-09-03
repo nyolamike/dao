@@ -53,7 +53,7 @@ defmodule GenSqlRootCmdTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.shops` (id INT(30) PRIMARY KEY, created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
+          "CREATE TABLE `grocerify.shops` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -65,8 +65,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             },
             "deleted_on" => %{
               "auto_increment" => false,
@@ -74,8 +75,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT NULL",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT NULL",
+              "type" => "datetime",
+              "unique" => false
             },
             "id" => %{
               "auto_increment" => true,
@@ -83,7 +85,7 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => true,
               "required" => false,
               "size" => 30,
-              "sql" => "INT(30) PRIMARY KEY",
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
               "type" => "integer"
             },
             "is_deleted" => %{
@@ -93,7 +95,8 @@ defmodule GenSqlRootCmdTest do
               "required" => true,
               "size" => 1,
               "sql" => "TINYINT(1) NOT NULL DEFAULT 0",
-              "type" => "string"
+              "type" => "boolean",
+              "unique" => false
             },
             "last_update_on" => %{
               "auto_increment" => false,
@@ -101,8 +104,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             }
           }
         }
@@ -123,7 +127,7 @@ defmodule GenSqlRootCmdTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.aircraft` (id INT(30) PRIMARY KEY, created_at DATETIME  DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME  DEFAULT NULL)"
+          "CREATE TABLE `grocerify.aircraft` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -135,8 +139,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             },
             "deleted_on" => %{
               "auto_increment" => false,
@@ -144,8 +149,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT NULL",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT NULL",
+              "type" => "datetime",
+              "unique" => false
             },
             "id" => %{
               "auto_increment" => true,
@@ -153,7 +159,7 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => true,
               "required" => false,
               "size" => 30,
-              "sql" => "INT(30) PRIMARY KEY",
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
               "type" => "integer"
             },
             "is_deleted" => %{
@@ -163,7 +169,8 @@ defmodule GenSqlRootCmdTest do
               "required" => true,
               "size" => 1,
               "sql" => "TINYINT(1) NOT NULL DEFAULT 0",
-              "type" => "string"
+              "type" => "boolean",
+              "unique" => false
             },
             "last_update_on" => %{
               "auto_increment" => false,
@@ -171,8 +178,9 @@ defmodule GenSqlRootCmdTest do
               "is_primary_key" => false,
               "required" => "",
               "size" => 60,
-              "sql" => "DATETIME  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-              "type" => "datetime"
+              "sql" => "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+              "type" => "datetime",
+              "unique" => false
             }
           }
         }
