@@ -43,6 +43,7 @@ defmodule DaoEngine do
       "root_cmd_node_list" => []
     }
 
+    # nyd: There is alot of boiler plate code here, consider refactoring
     Enum.reduce(query_object, results, fn {command_key, input_kwl_node}, results_acc ->
       case command_key do
         :add ->
@@ -57,6 +58,13 @@ defmodule DaoEngine do
             gen_sql_for_get(results_acc["context"], query_object, input_kwl_node)
 
           root_cmd_node_list = [{:get, input_node_list} | results_acc["root_cmd_node_list"]]
+          %{"context" => context, "root_cmd_node_list" => root_cmd_node_list}
+
+        :update ->
+          %{"context" => context, "input_node_list" => input_node_list} =
+            gen_sql_for_update(results_acc["context"], query_object, input_kwl_node)
+
+          root_cmd_node_list = [{:update, input_node_list} | results_acc["root_cmd_node_list"]]
           %{"context" => context, "root_cmd_node_list" => root_cmd_node_list}
 
         :delete ->
@@ -272,6 +280,131 @@ defmodule DaoEngine do
 
       %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
     end)
+  end
+
+  def gen_sql_for_update(context, query_object, input_kwl_node) do
+    results = %{
+      "context" => context,
+      "input_node_list" => []
+    }
+
+    Enum.reduce(input_kwl_node, results, fn {node_name_key, fixtures_kwl_node}, results_acc ->
+      %{"context" => context, "fixture_list" => fixture_list} =
+        gen_sql_for_update_fixture(results_acc["context"], query_object, fixtures_kwl_node)
+
+      input_node_list = [{node_name_key, fixture_list} | results_acc["input_node_list"]]
+      %{"context" => context, "input_node_list" => input_node_list}
+    end)
+  end
+
+  def gen_sql_for_update_fixture(context, _query_object, fixtures_kwl_node) do
+    result = %{
+      "context" => context,
+      "fixture_list" => []
+    }
+
+    Enum.reduce(fixtures_kwl_node, result, fn {node_name_key, query_config}, result_acc ->
+      str_node_name_key = Atom.to_string(node_name_key)
+      is_list = Utils.is_word_plural?(query_config, str_node_name_key)
+      # check if the table and its cols exist in the schema
+      ensure_table_response =
+        Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
+
+      # Utils.log("ensure_table_exist", ensure_table_response)
+
+      {context, any_alter_table_sql} =
+        case ensure_table_response do
+          {context, sql} -> {context, sql}
+          context -> {context, ""}
+        end
+
+      update_sql =
+        if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
+             Map.get(query_config, "dao@def_only") == true do
+          # no insert sql will be generated
+          ""
+        else
+          sql = "UPDATE #{Table.sql_table_name(context, str_node_name_key)}"
+
+          cond do
+            is_list(query_config) ->
+              # nyd: if possible how would we support updating information using lists
+              ""
+
+            is_map(query_config) ->
+              gen_values_sql =
+                Enum.reduce(query_config, "", fn {key, value}, sql_acc ->
+                  skip = ["dao@where", "dao@def_only"]
+
+                  if key in skip do
+                    sql_acc
+                  else
+                    comma = if sql_acc == "", do: "", else: ", "
+                    str_val = Column.sql_value_format(value)
+                    "#{comma}#{key} = #{str_val}"
+                  end
+                end)
+
+              where_sql = process_where_clause(context, query_config, query_config["dao@where"])
+              where_sql = String.trim(where_sql)
+              # this applies only if timestamps have not been turned off in the schema
+              and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+              default_where_clause = "#{and_condition}is_deleted = 0"
+
+              # nyd: throw an error if there are no set values
+              "#{sql} SET #{gen_values_sql} WHERE #{default_where_clause}"
+
+            true ->
+              throw("Unknown query config: gen values sql in generating sqls for update fixture")
+          end
+        end
+
+      cond do
+        update_sql != "" ->
+          # we have some data to update
+          sql = update_sql
+
+          # nyd: the auto commented out alter cmd needs to be re-enable
+          # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
+
+          fixture_config = %{
+            "sql" => sql,
+            "is_list" => is_list
+          }
+
+          auto_schema_changes =
+            Enum.reduce(context["auto_schema_changes"], [], fn item, acc ->
+              look_for = "dao@skip: " <> any_alter_table_sql
+              temp_sql = if look_for == item, do: any_alter_table_sql, else: item
+              acc ++ [temp_sql]
+            end)
+
+          context = %{context | "auto_schema_changes" => auto_schema_changes}
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        update_sql == "" && any_alter_table_sql != "" ->
+          # there is no data to be updated, but we have some schema changes
+          # then these are gona be fixture because they are the only queries in the root command
+          fixture_config = %{
+            "sql" => any_alter_table_sql,
+            "is_list" => is_list
+          }
+
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        update_sql == "" && any_alter_table_sql == "" ->
+          fixture_config = %{
+            "sql" => "",
+            "is_list" => is_list
+          }
+
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+      end
+    end)
+  end
+
+  def process_where_clause(context, query_config, {left, "equals", right}) do
+    "#{left} = #{Column.sql_value_format(right)}"
   end
 
   def gen_sql_for_delete(context, query_object, input_kwl_node) do

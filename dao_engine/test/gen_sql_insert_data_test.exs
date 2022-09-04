@@ -143,7 +143,8 @@ defmodule GenSqlInsertDataTest do
     ]
 
     results = Dao.execute(context, query)
-    IO.inspect(results)
+    expected_results = expected_results_auto_increment()
+    assert expected_results == results
   end
 
   def expected_results() do
@@ -452,6 +453,68 @@ defmodule GenSqlInsertDataTest do
               "required" => false,
               "size" => 30,
               "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            }
+          }
+        },
+        "schema_timestamps" => true,
+        "seeds" => [],
+        "sudo_delete" => false,
+        "transactional" => true
+      },
+      "root_cmd_node_list" => [
+        add: [def_table: [student: %{"is_list" => false, "sql" => ""}]]
+      ]
+    }
+  end
+
+  def expected_results_auto_increment() do
+    %{
+      "context" => %{
+        "accepted_named_queries" => [],
+        "api" => nil,
+        "auto_allowed_names_queries_changes" => [],
+        "auto_alter_db" => true,
+        "auto_alter_db_in_production" => false,
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_book.students` (major VARCHAR(20) DEFAULT 'undecided', name VARCHAR(20) NOT NULL, student_id INT(30) AUTO_INCREMENT, PRIMARY KEY(student_id))"
+        ],
+        "database_name" => "company_book",
+        "database_type" => "mysql",
+        "environment" => "development",
+        "migrations" => [],
+        "multi_tenant" => false,
+        "real_time" => true,
+        "schema" => %{
+          "students" => %{
+            "major" => %{
+              "auto_increment" => false,
+              "default" => "undecided",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 20,
+              "sql" => "VARCHAR(20) DEFAULT 'undecided'",
+              "type" => "string",
+              "unique" => false
+            },
+            "name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => true,
+              "size" => 20,
+              "sql" => "VARCHAR(20) NOT NULL",
+              "type" => "string",
+              "unique" => false
+            },
+            "student_id" => %{
+              "auto_increment" => true,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT",
               "type" => "integer",
               "unique" => false
             }

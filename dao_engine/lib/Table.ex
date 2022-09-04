@@ -72,14 +72,21 @@ defmodule Table do
         }
 
         Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
-          sql_acc = String.trim(acc["sql"])
-          table_schema = acc["table_schema"]
-          col_def = Column.define_column(context, column_name_key, column_config)
-          # update the schema
-          schema = Map.put(table_schema, column_name_key, col_def["config"])
-          comma = if sql_acc == "", do: "", else: ", "
-          sql = sql_acc <> comma <> String.trim(col_def["sql"])
-          %{"sql" => sql, "table_schema" => schema}
+          skips = ["dao@where", "dao@def_only"]
+
+          if column_name_key in skips do
+            # just continure
+            acc
+          else
+            sql_acc = String.trim(acc["sql"])
+            table_schema = acc["table_schema"]
+            col_def = Column.define_column(context, column_name_key, column_config)
+            # update the schema
+            schema = Map.put(table_schema, column_name_key, col_def["config"])
+            comma = if sql_acc == "", do: "", else: ", "
+            sql = sql_acc <> comma <> String.trim(col_def["sql"])
+            %{"sql" => sql, "table_schema" => schema}
+          end
         end)
       else
         %{

@@ -357,8 +357,7 @@ defmodule Column do
       "is_primary_key" => is_primary_key,
       "required" => "",
       "unique" => unique,
-      "sql" =>
-        String.trim("TEXT#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
+      "sql" => String.trim("TEXT#{required_sql}#{default_sql}#{unique_sql}#{auto_increment_sql}")
     }
   end
 
