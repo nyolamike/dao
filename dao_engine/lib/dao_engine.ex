@@ -462,29 +462,110 @@ defmodule DaoEngine do
     Enum.reduce(fixtures_kwl_node, result, fn {node_name_key, query_config}, result_acc ->
       str_node_name_key = Atom.to_string(node_name_key)
 
-      if query_config == "table" || query_config == true do
-        # deleting the entire table
-        {new_context, sql} = Table.get_sql_remove_table(result_acc["context"], str_node_name_key)
+      cond do
+        query_config == "table" || query_config == nil ->
+          # deleting the entire table
+          {new_context, sql} =
+            Table.get_sql_remove_table(result_acc["context"], str_node_name_key)
 
-        fixture_config = %{
-          "sql" => sql,
-          "is_list" => true
-        }
+          fixture_config = %{
+            "sql" => sql,
+            "is_list" => true
+          }
 
-        %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
-      else
-        # deleting some columns or data
-        {new_context, sql} =
-          Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
+          %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
 
-        # Utils.log("here", query_config)
-        fixture_config = %{
-          "sql" => sql,
-          "is_list" => true
-        }
+        is_list(query_config) == false && is_tuple(query_config) == false &&
+          is_map(query_config) == false &&
+            (query_config == "all" || query_config == true || String.trim(query_config) == "*") ->
+          # deleting data from a table
+          sql = "DELETE FROM #{Table.sql_table_name(result_acc["context"], node_name_key)}"
 
-        %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+          # this applies only if timestamps have not been turned off in the schema
+          default_where_clause = " WHERE is_deleted = 0"
+
+          fixture_config = %{
+            "sql" => sql <> default_where_clause,
+            "is_list" => true
+          }
+
+          %{
+            "context" => result_acc["context"],
+            "fixture_list" => [{node_name_key, fixture_config}]
+          }
+
+        is_map(query_config) == true || is_tuple(query_config) ->
+          # deleting data from a table
+          sql = "DELETE FROM #{Table.sql_table_name(result_acc["context"], node_name_key)}"
+
+          where_config =
+            cond do
+              is_map(query_config) == true && Map.has_key?(query_config, "dao@where") ->
+                query_config["dao@where"]
+
+              is_map(query_config) == true && Map.has_key?(query_config, "dao@where") == false ->
+                ""
+
+              true ->
+                query_config
+            end
+
+          where_sql = process_where_clause(result_acc["context"], query_config, where_config)
+          where_sql = String.trim(where_sql)
+          # this applies only if timestamps have not been turned off in the schema
+          and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+          default_where_clause = "#{and_condition}is_deleted = 0"
+
+          fixture_config = %{
+            "sql" => "#{sql} WHERE #{default_where_clause}",
+            "is_list" => true
+          }
+
+          %{
+            "context" => result_acc["context"],
+            "fixture_list" => [{node_name_key, fixture_config}]
+          }
+
+        is_list(query_config) == true ->
+          # deleting some columns
+          {new_context, sql} =
+            Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
+
+          # Utils.log("here", query_config)
+          fixture_config = %{
+            "sql" => sql,
+            "is_list" => true
+          }
+
+          %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        true ->
+          throw("Unknown delete query config on #{node_name_key}")
       end
+
+      # if query_config == "table" || query_config == true do
+      #   # deleting the entire table
+      #   {new_context, sql} = Table.get_sql_remove_table(result_acc["context"], str_node_name_key)
+
+      #   fixture_config = %{
+      #     "sql" => sql,
+      #     "is_list" => true
+      #   }
+
+      #   %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+      # else
+      #   # deleting some columns or data
+      #   {new_context, sql} =
+      #     Table.get_sql_remove_columns(result_acc["context"], str_node_name_key, query_config)
+
+      #   # Utils.log("here", query_config)
+      #   fixture_config = %{
+      #     "sql" => sql,
+      #     "is_list" => true
+      #   }
+
+      #   %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+      # end
     end)
   end
 

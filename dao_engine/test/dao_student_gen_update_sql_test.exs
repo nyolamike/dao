@@ -227,7 +227,8 @@ defmodule DaoStudentGenUpdateSqlTest do
     ]
 
     results = Dao.execute(context, query)
-    IO.inspect(results)
+
+    # nyd: this query must should show multiple queries generated or is it that the last operation will be the results but i think the track record of all queries must be availble
   end
 
   defp get_expected_results() do

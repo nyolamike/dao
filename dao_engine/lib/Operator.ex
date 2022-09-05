@@ -15,6 +15,7 @@ defmodule Operator do
       "is equals to" -> "="
       "is_equals_to" -> "="
       "isequalsto" -> "="
+      "e" -> "="
       "=" -> "="
       "less than" -> "<"
       "less_than" -> "<"
