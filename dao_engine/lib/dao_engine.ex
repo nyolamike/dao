@@ -341,11 +341,12 @@ defmodule DaoEngine do
                   else
                     comma = if sql_acc == "", do: "", else: ", "
                     str_val = Column.sql_value_format(value)
-                    "#{comma}#{key} = #{str_val}"
+                    "#{sql_acc}#{comma}#{key} = #{str_val}"
                   end
                 end)
 
-              where_sql = process_where_clause(context, query_config, query_config["dao@where"])
+              where_clause_config = Map.get(query_config, "dao@where")
+              where_sql = process_where_clause(context, query_config, where_clause_config)
               where_sql = String.trim(where_sql)
               # this applies only if timestamps have not been turned off in the schema
               and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
@@ -403,8 +404,38 @@ defmodule DaoEngine do
     end)
   end
 
-  def process_where_clause(context, query_config, {left, "equals", right}) do
-    "#{left} = #{Column.sql_value_format(right)}"
+  def process_where_clause(_context, _query_config, nil), do: ""
+
+  def process_where_clause(context, query_config, [left, operator, right]) do
+    process_where_clause(context, query_config, {left, operator, right})
+  end
+
+  def process_where_clause(_context, _query_config, where_sql) when is_binary(where_sql),
+    do: where_sql
+
+  def process_where_clause(context, query_config, {left, operator, right}) do
+    operator_sql = Operator.parse(operator)
+
+    cond do
+      is_tuple(left) == false && is_tuple(right) == false ->
+        left_side = left
+        possible_value = Column.sql_value_format(right)
+        "#{left_side} #{operator_sql} #{possible_value}"
+
+      is_tuple(left) == false && is_tuple(right) == true ->
+        right_side = process_where_clause(context, query_config, right)
+        "(#{left}) #{operator_sql} #{right_side}"
+
+      is_tuple(left) == true && is_tuple(right) == false ->
+        left_side = process_where_clause(context, query_config, right)
+        possible_value = Column.sql_value_format(right)
+        "#{left_side} #{operator_sql} (#{possible_value})"
+
+      is_tuple(left) == true && is_tuple(right) == true ->
+        left_side = process_where_clause(context, query_config, left)
+        right_side = process_where_clause(context, query_config, right)
+        "(#{left_side}) #{operator_sql} (#{right_side})"
+    end
   end
 
   def gen_sql_for_delete(context, query_object, input_kwl_node) do

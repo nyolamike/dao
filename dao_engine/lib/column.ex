@@ -397,22 +397,30 @@ defmodule Column do
       }
 
       Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
-        sql_acc = String.trim(acc["sql"])
-        table_schema = acc["table_schema"]
+        skips = ["dao@where", "dao@def_only"]
 
-        if Map.has_key?(table_schema, column_name_key) == false do
-          col_def = define_column(context, column_name_key, column_config)
-          # update the schema
-          schema = Map.put(table_schema, column_name_key, col_def["config"])
-          comma = if sql_acc == "", do: "", else: ", "
-          sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
-          %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"]}
-        else
-          # add an error in case we are in the add situation
-          # nyd: detect if we are in the add situation
-          msg = "Column " <> column_name_key <> ", already exists"
-          errors = Map.put(acc["errors"], column_name_key, msg)
-          %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors}
+        case column_name_key in skips do
+          false ->
+            sql_acc = String.trim(acc["sql"])
+            table_schema = acc["table_schema"]
+
+            if Map.has_key?(table_schema, column_name_key) == false do
+              col_def = define_column(context, column_name_key, column_config)
+              # update the schema
+              schema = Map.put(table_schema, column_name_key, col_def["config"])
+              comma = if sql_acc == "", do: "", else: ", "
+              sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
+              %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"]}
+            else
+              # add an error in case we are in the add situation
+              # nyd: detect if we are in the add situation
+              msg = "Column " <> column_name_key <> ", already exists"
+              errors = Map.put(acc["errors"], column_name_key, msg)
+              %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors}
+            end
+
+          true ->
+            acc
         end
       end)
     else
