@@ -503,4 +503,9 @@ defmodule Column do
   def sql_value_format(value) when is_binary(value), do: "'#{value}'"
   def sql_value_format(value) when is_map(value), do: "hi"
   def sql_value_format(value), do: "#{value}"
+
+  def sql_column_name(context, table_name, column_name) do
+    plural_table_name = Inflex.pluralize(table_name)
+    "`#{context["database_name"]}.#{plural_table_name}.#{column_name}`"
+  end
 end

@@ -266,19 +266,99 @@ defmodule DaoEngine do
       str_node_name_key = Atom.to_string(node_name_key)
       is_list = Utils.is_word_plural?(query_config, str_node_name_key)
       # check if the table exists in the schema
-      context =
+      ensure_table_response =
         Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
 
-      sql = "SELECT *"
-      sql = sql <> " FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}"
-      sql = sql <> " WHERE is_deleted == 0"
+      {context, any_alter_table_sql} =
+        case ensure_table_response do
+          {context, sql} -> {context, sql}
+          context -> {context, ""}
+        end
 
-      fixture_config = %{
-        "sql" => sql,
-        "is_list" => is_list
-      }
+      insert_sql =
+        if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
+             Map.get(query_config, "dao@def_only") == true do
+          # no select sql will be generated
+          ""
+        else
+          sql = "SELECT"
 
-      %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+          specififc_cols_sql =
+            cond do
+              is_list(query_config) ->
+                # nyd: we expect that someone just provided a list of specific columns to be fecthed
+                Enum.reduce(query_config, "", fn key, sql_acc ->
+                  skip = ["dao@where", "dao@def_only"]
+
+                  if key in skip do
+                    sql_acc
+                  else
+                    comma = if sql_acc == "", do: "", else: ", "
+                    "#{sql_acc}#{comma}#{key}"
+                  end
+                end)
+
+              is_map(query_config) ->
+                processed_query_config = Table.preprocess_query_config(context, query_config)
+                Enum.reduce(processed_query_config["columns"], "", fn {key, _cast_data_type_or_formating_flags}, sql_acc ->
+                  skip = ["dao@where", "dao@def_only"]
+
+                  if key in skip do
+                    sql_acc
+                  else
+                    comma = if sql_acc == "", do: "", else: ", "
+                    column_name = Column.sql_column_name(context, str_node_name_key, key)
+                    "#{sql_acc}#{comma}#{column_name}"
+                  end
+                end)
+            end
+
+          specififc_cols_sql =
+            if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
+
+          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)} WHERE is_deleted == 0"
+        end
+
+      cond do
+        insert_sql != "" ->
+          # we have some data to update
+          sql = insert_sql
+          # nyd: the auto commented out alter cmd needs to be re-enable
+          # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
+
+          fixture_config = %{
+            "sql" => sql,
+            "is_list" => is_list
+          }
+
+          auto_schema_changes =
+            Enum.reduce(context["auto_schema_changes"], [], fn item, acc ->
+              look_for = "dao@skip: " <> any_alter_table_sql
+              temp_sql = if look_for == item, do: any_alter_table_sql, else: item
+              acc ++ [temp_sql]
+            end)
+
+          context = %{context | "auto_schema_changes" => auto_schema_changes}
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        insert_sql == "" && any_alter_table_sql != "" ->
+          # there is no data to be updated, but we have some schema changes
+          # then these are gona be fixture because they are the only queries in the root command
+          fixture_config = %{
+            "sql" => any_alter_table_sql,
+            "is_list" => is_list
+          }
+
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        insert_sql == "" && any_alter_table_sql == "" ->
+          fixture_config = %{
+            "sql" => "",
+            "is_list" => is_list
+          }
+
+          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+      end
     end)
   end
 
