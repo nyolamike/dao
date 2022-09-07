@@ -93,7 +93,8 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "SELECT `grocerify.students.gpa`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted == 0"
+              "sql" =>
+                "SELECT `grocerify.students.gpa`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted == 0"
             }
           ]
         ]
@@ -152,7 +153,7 @@ defmodule DaoBasicQueriesTest do
   end
 
   test "select data order by", %{"context" => context} do
-    context =  %{
+    context = %{
       "database_type" => "mysql",
       "database_name" => "grocerify",
       "schema" => %{
@@ -179,6 +180,276 @@ defmodule DaoBasicQueriesTest do
 
     results = Dao.execute(context, query)
 
-    IO.inspect(results)
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" =>
+                "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY name"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "select data order by ascending", %{"context" => context} do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "grocerify",
+      "schema" => %{
+        "students" => %{
+          "name" => "string",
+          "major" => "string"
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true
+    }
+
+    query = [
+      get: [
+        all_students: [
+          students: %{
+            "name" => "string",
+            "major" => "string",
+            "dao@order_by_ascending" => ["name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" => "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY name ASC"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "select data order by descending", %{"context" => context} do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "grocerify",
+      "schema" => %{
+        "students" => %{
+          "name" => "string",
+          "major" => "string"
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true
+    }
+
+    query = [
+      get: [
+        all_students: [
+          students: %{
+            "name" => "string",
+            "major" => "string",
+            "dao@order_by_descending" => ["name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" => "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY name DESC"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "select data order by with no columns specified", %{"context" => context} do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "grocerify",
+      "schema" => %{
+        "students" => %{
+          "name" => "string",
+          "major" => "string"
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true
+    }
+
+    query = [
+      get: [
+        all_students: [
+          students: %{
+            "dao@order_by" => ["name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" => "SELECT * FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY name"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "select data order by multiple columns", %{"context" => context} do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "grocerify",
+      "schema" => %{
+        "students" => %{
+          "name" => "string",
+          "major" => "string"
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true
+    }
+
+    query = [
+      get: [
+        all_students: [
+          students: %{
+            "dao@order_by" => ["major","name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" => "SELECT * FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY major, name"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "select data limit number of results", %{"context" => context} do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "grocerify",
+      "schema" => %{
+        "students" => %{
+          "name" => "string",
+          "major" => "string"
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true
+    }
+
+    query = [
+      get: [
+        all_students: [
+          students: %{
+            "dao@order_by" => ["major","name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [],
+        "database_name" => "grocerify",
+        "database_type" => "mysql",
+        "schema" => %{"students" => %{"major" => "string", "name" => "string"}}
+      },
+      "root_cmd_node_list" => [
+        get: [
+          all_students: [
+            students: %{
+              "is_list" => true,
+              "sql" => "SELECT * FROM `grocerify.students` WHERE is_deleted == 0 ORDER BY major, name"
+            }
+          ]
+        ]
+      ]
+    }
+
+    assert expected_results == results
   end
 end

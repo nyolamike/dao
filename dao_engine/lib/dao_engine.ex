@@ -300,8 +300,11 @@ defmodule DaoEngine do
 
               is_map(query_config) ->
                 processed_query_config = Table.preprocess_query_config(context, query_config)
-                Enum.reduce(processed_query_config["columns"], "", fn {key, _cast_data_type_or_formating_flags}, sql_acc ->
-                  skip = ["dao@where", "dao@def_only"]
+
+                Enum.reduce(processed_query_config["columns"], "", fn {key,
+                                                                       _cast_data_type_or_formating_flags},
+                                                                      sql_acc ->
+                  skip = Utils.skip_keys()
 
                   if key in skip do
                     sql_acc
@@ -316,7 +319,97 @@ defmodule DaoEngine do
           specififc_cols_sql =
             if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
 
-          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)} WHERE is_deleted == 0"
+          order_by_sql =
+            if is_map(query_config) do
+              processed_query_config = Table.preprocess_query_config(context, query_config)
+
+              cond do
+                Map.has_key?(processed_query_config, "order_by") &&
+                    is_binary(processed_query_config["order_by"]) ->
+                  # one has specified using string so we trim and split using spaces
+                  orderby_list =
+                    processed_query_config["order_by"]
+                    |> String.trim()
+                    |> String.split(trim: true)
+
+                  Enum.reduce(orderby_list, "", fn column, sql_acc ->
+                    comma = if sql_acc == "", do: "", else: ", "
+                    "#{sql_acc}#{comma}#{column}"
+                  end)
+                  |> String.trim()
+
+                Map.has_key?(processed_query_config, "order_by") &&
+                    is_list(processed_query_config["order_by"]) ->
+                  Enum.reduce(processed_query_config["order_by"], "", fn column, sql_acc ->
+                    comma = if sql_acc == "", do: "", else: ", "
+                    "#{sql_acc}#{comma}#{column}"
+                  end)
+                  |> String.trim()
+
+                Map.has_key?(processed_query_config, "order_by_ascending") &&
+                    is_binary(processed_query_config["order_by_ascending"]) ->
+                  # one has specified using string so we trim and split using spaces
+                  orderby_list =
+                    processed_query_config["order_by_ascending"]
+                    |> String.trim()
+                    |> String.split(trim: true)
+
+                  temp_sql =
+                    Enum.reduce(orderby_list, "", fn column, sql_acc ->
+                      comma = if sql_acc == "", do: "", else: ", "
+                      "#{sql_acc}#{comma}#{column}"
+                    end)
+
+                    "#{String.trim(temp_sql)} ASC"
+
+                Map.has_key?(processed_query_config, "order_by_ascending") &&
+                    is_list(processed_query_config["order_by_ascending"]) ->
+                  temp_sql =
+                    Enum.reduce(processed_query_config["order_by_ascending"], "", fn column,
+                                                                                     sql_acc ->
+                      comma = if sql_acc == "", do: "", else: ", "
+                      "#{sql_acc}#{comma}#{column}"
+                    end)
+
+                  "#{String.trim(temp_sql)} ASC"
+
+                Map.has_key?(processed_query_config, "order_by_descending") &&
+                    is_binary(processed_query_config["order_by_descending"]) ->
+                  # one has specified using string so we trim and split using spaces
+                  orderby_list =
+                    processed_query_config["order_by_descending"]
+                    |> String.trim()
+                    |> String.split(trim: true)
+
+                  temp_sql =
+                    Enum.reduce(orderby_list, "", fn column, sql_acc ->
+                      comma = if sql_acc == "", do: "", else: ", "
+                      "#{sql_acc}#{comma}#{column}"
+                    end)
+
+                  "#{String.trim(temp_sql)} DEC"
+
+                Map.has_key?(processed_query_config, "order_by_descending") &&
+                    is_list(processed_query_config["order_by_descending"]) ->
+                  temp_sql =
+                    Enum.reduce(processed_query_config["order_by_descending"], "", fn column,
+                                                                                      sql_acc ->
+                      comma = if sql_acc == "", do: "", else: ", "
+                      "#{sql_acc}#{comma}#{column}"
+                    end)
+
+                  "#{String.trim(temp_sql)} DESC"
+
+                true ->
+                  ""
+              end
+            else
+              ""
+            end
+
+          order_by_sql = if order_by_sql == "", do: "", else: " ORDER BY #{order_by_sql}"
+
+          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)} WHERE is_deleted == 0#{order_by_sql}"
         end
 
       cond do

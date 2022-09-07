@@ -76,4 +76,8 @@ defmodule Utils do
         false
     end
   end
+
+  def skip_keys() do
+    ["dao@where", "dao@def_only", "dao@order_by", "dao@order_by_ascending", "dao@order_by_descending"]
+  end
 end

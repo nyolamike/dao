@@ -144,7 +144,8 @@ defmodule SelectAutoCreateColsTest do
           employees_list: [
             employees: %{
               "is_list" => true,
-              "sql" => "SELECT `grocerify.employees.emp_id`, `grocerify.employees.first_name`, `grocerify.employees.last_name`, `grocerify.employees.status` FROM `grocerify.employees` WHERE is_deleted == 0"
+              "sql" =>
+                "SELECT `grocerify.employees.emp_id`, `grocerify.employees.first_name`, `grocerify.employees.last_name`, `grocerify.employees.status` FROM `grocerify.employees` WHERE is_deleted == 0"
             }
           ]
         ]
