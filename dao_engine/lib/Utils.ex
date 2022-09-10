@@ -78,6 +78,17 @@ defmodule Utils do
   end
 
   def skip_keys() do
-    ["dao@where", "dao@def_only", "dao@order_by", "dao@order_by_ascending", "dao@order_by_descending"]
+    [
+      "dao@where",
+      "dao@def_only",
+      "dao@order_by",
+      "dao@order_by_ascending",
+      "dao@order_by_descending",
+      "dao@descend",
+      "dao@limit",
+      "dao@size",
+      "dao@page_size",
+      "dao@pagesize"
+    ]
   end
 end

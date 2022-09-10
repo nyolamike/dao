@@ -397,7 +397,7 @@ defmodule Column do
       }
 
       Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
-        skips = ["dao@where", "dao@def_only"]
+        skips = Utils.skip_keys()
 
         case column_name_key in skips do
           false ->

@@ -278,105 +278,11 @@ defmodule Table do
         end)
       end
 
-    # order by
-    preprocess_config_table_def =
-      cond do
-        Map.has_key?(config_table_def, "dao@order_by") ->
-          Map.put(preprocess_config_table_def, "order_by", config_table_def["dao@order_by"])
+    {context, preprocess_config_table_def} =
+      OrderBy.preprocess_config(context, preprocess_config_table_def, config_table_def)
 
-        Map.has_key?(config_table_def, "dao@order_by_ascending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@order_by_ascending"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_asc") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@order_asc"]
-          )
-
-        Map.has_key?(config_table_def, "dao@ascending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@ascending"]
-          )
-
-        Map.has_key?(config_table_def, "dao@asc") ->
-          Map.put(preprocess_config_table_def, "order_by_ascending", config_table_def["dao@asc"])
-
-        Map.has_key?(config_table_def, "dao@ascend") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@ascend"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_asc") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@order_asc"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_ascending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_ascending",
-            config_table_def["dao@order_ascending"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_by_descending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@order_by_descending"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_desc") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@order_desc"]
-          )
-
-        Map.has_key?(config_table_def, "dao@descending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@descending"]
-          )
-
-        Map.has_key?(config_table_def, "dao@asc") ->
-          Map.put(preprocess_config_table_def, "order_by_descending", config_table_def["dao@asc"])
-
-        Map.has_key?(config_table_def, "dao@descend") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@descend"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_asc") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@order_asc"]
-          )
-
-        Map.has_key?(config_table_def, "dao@order_descending") ->
-          Map.put(
-            preprocess_config_table_def,
-            "order_by_descending",
-            config_table_def["dao@order_descending"]
-          )
-
-        true ->
-          preprocess_config_table_def
-      end
+    {context, preprocess_config_table_def} =
+      Pagination.preprocess_config(context, preprocess_config_table_def, config_table_def)
 
     preprocess_config_table_def
   end

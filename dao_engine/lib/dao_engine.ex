@@ -288,7 +288,7 @@ defmodule DaoEngine do
               is_list(query_config) ->
                 # nyd: we expect that someone just provided a list of specific columns to be fecthed
                 Enum.reduce(query_config, "", fn key, sql_acc ->
-                  skip = ["dao@where", "dao@def_only"]
+                  skip = Utils.skip_keys()
 
                   if key in skip do
                     sql_acc
@@ -319,97 +319,25 @@ defmodule DaoEngine do
           specififc_cols_sql =
             if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
 
-          order_by_sql =
+          where_sql =
             if is_map(query_config) do
-              processed_query_config = Table.preprocess_query_config(context, query_config)
+              where_clause_config = Map.get(query_config, "dao@where")
 
-              cond do
-                Map.has_key?(processed_query_config, "order_by") &&
-                    is_binary(processed_query_config["order_by"]) ->
-                  # one has specified using string so we trim and split using spaces
-                  orderby_list =
-                    processed_query_config["order_by"]
-                    |> String.trim()
-                    |> String.split(trim: true)
+              where_sql =
+                Operator.process_where_clause(context, query_config, where_clause_config)
 
-                  Enum.reduce(orderby_list, "", fn column, sql_acc ->
-                    comma = if sql_acc == "", do: "", else: ", "
-                    "#{sql_acc}#{comma}#{column}"
-                  end)
-                  |> String.trim()
-
-                Map.has_key?(processed_query_config, "order_by") &&
-                    is_list(processed_query_config["order_by"]) ->
-                  Enum.reduce(processed_query_config["order_by"], "", fn column, sql_acc ->
-                    comma = if sql_acc == "", do: "", else: ", "
-                    "#{sql_acc}#{comma}#{column}"
-                  end)
-                  |> String.trim()
-
-                Map.has_key?(processed_query_config, "order_by_ascending") &&
-                    is_binary(processed_query_config["order_by_ascending"]) ->
-                  # one has specified using string so we trim and split using spaces
-                  orderby_list =
-                    processed_query_config["order_by_ascending"]
-                    |> String.trim()
-                    |> String.split(trim: true)
-
-                  temp_sql =
-                    Enum.reduce(orderby_list, "", fn column, sql_acc ->
-                      comma = if sql_acc == "", do: "", else: ", "
-                      "#{sql_acc}#{comma}#{column}"
-                    end)
-
-                    "#{String.trim(temp_sql)} ASC"
-
-                Map.has_key?(processed_query_config, "order_by_ascending") &&
-                    is_list(processed_query_config["order_by_ascending"]) ->
-                  temp_sql =
-                    Enum.reduce(processed_query_config["order_by_ascending"], "", fn column,
-                                                                                     sql_acc ->
-                      comma = if sql_acc == "", do: "", else: ", "
-                      "#{sql_acc}#{comma}#{column}"
-                    end)
-
-                  "#{String.trim(temp_sql)} ASC"
-
-                Map.has_key?(processed_query_config, "order_by_descending") &&
-                    is_binary(processed_query_config["order_by_descending"]) ->
-                  # one has specified using string so we trim and split using spaces
-                  orderby_list =
-                    processed_query_config["order_by_descending"]
-                    |> String.trim()
-                    |> String.split(trim: true)
-
-                  temp_sql =
-                    Enum.reduce(orderby_list, "", fn column, sql_acc ->
-                      comma = if sql_acc == "", do: "", else: ", "
-                      "#{sql_acc}#{comma}#{column}"
-                    end)
-
-                  "#{String.trim(temp_sql)} DEC"
-
-                Map.has_key?(processed_query_config, "order_by_descending") &&
-                    is_list(processed_query_config["order_by_descending"]) ->
-                  temp_sql =
-                    Enum.reduce(processed_query_config["order_by_descending"], "", fn column,
-                                                                                      sql_acc ->
-                      comma = if sql_acc == "", do: "", else: ", "
-                      "#{sql_acc}#{comma}#{column}"
-                    end)
-
-                  "#{String.trim(temp_sql)} DESC"
-
-                true ->
-                  ""
-              end
+              where_sql = String.trim(where_sql)
+              # this applies only if timestamps have not been turned off in the schema
+              and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+              " WHERE #{and_condition}is_deleted = 0"
             else
-              ""
+              " WHERE is_deleted = 0"
             end
 
-          order_by_sql = if order_by_sql == "", do: "", else: " ORDER BY #{order_by_sql}"
+          order_by_sql = OrderBy.gen_sql(context, query_config)
+          pagination_sql = Pagination.gen_sql(context, query_config)
 
-          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)} WHERE is_deleted == 0#{order_by_sql}"
+          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{pagination_sql}"
         end
 
       cond do
@@ -507,7 +435,7 @@ defmodule DaoEngine do
             is_map(query_config) ->
               gen_values_sql =
                 Enum.reduce(query_config, "", fn {key, value}, sql_acc ->
-                  skip = ["dao@where", "dao@def_only"]
+                  skip = Utils.skip_keys()
 
                   if key in skip do
                     sql_acc
@@ -519,7 +447,10 @@ defmodule DaoEngine do
                 end)
 
               where_clause_config = Map.get(query_config, "dao@where")
-              where_sql = process_where_clause(context, query_config, where_clause_config)
+
+              where_sql =
+                Operator.process_where_clause(context, query_config, where_clause_config)
+
               where_sql = String.trim(where_sql)
               # this applies only if timestamps have not been turned off in the schema
               and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
@@ -575,40 +506,6 @@ defmodule DaoEngine do
           %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
       end
     end)
-  end
-
-  def process_where_clause(_context, _query_config, nil), do: ""
-
-  def process_where_clause(context, query_config, [left, operator, right]) do
-    process_where_clause(context, query_config, {left, operator, right})
-  end
-
-  def process_where_clause(_context, _query_config, where_sql) when is_binary(where_sql),
-    do: where_sql
-
-  def process_where_clause(context, query_config, {left, operator, right}) do
-    operator_sql = Operator.parse(operator)
-
-    cond do
-      is_tuple(left) == false && is_tuple(right) == false ->
-        left_side = left
-        possible_value = Column.sql_value_format(right)
-        "#{left_side} #{operator_sql} #{possible_value}"
-
-      is_tuple(left) == false && is_tuple(right) == true ->
-        right_side = process_where_clause(context, query_config, right)
-        "(#{left}) #{operator_sql} #{right_side}"
-
-      is_tuple(left) == true && is_tuple(right) == false ->
-        left_side = process_where_clause(context, query_config, right)
-        possible_value = Column.sql_value_format(right)
-        "#{left_side} #{operator_sql} (#{possible_value})"
-
-      is_tuple(left) == true && is_tuple(right) == true ->
-        left_side = process_where_clause(context, query_config, left)
-        right_side = process_where_clause(context, query_config, right)
-        "(#{left_side}) #{operator_sql} (#{right_side})"
-    end
   end
 
   def gen_sql_for_delete(context, query_object, input_kwl_node) do
@@ -683,7 +580,9 @@ defmodule DaoEngine do
                 query_config
             end
 
-          where_sql = process_where_clause(result_acc["context"], query_config, where_config)
+          where_sql =
+            Operator.process_where_clause(result_acc["context"], query_config, where_config)
+
           where_sql = String.trim(where_sql)
           # this applies only if timestamps have not been turned off in the schema
           and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "

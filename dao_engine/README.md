@@ -117,3 +117,5 @@ however any local  "dao@timestamps": false, will overrride this
 
 
 - WHen data is being inserted as an array without specifying columns into a table one needs to follow the alphabetic order of the columns
+
+*** right now we need to add the ability for all sqls in a named query to be tracked

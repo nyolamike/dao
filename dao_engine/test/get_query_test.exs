@@ -163,7 +163,7 @@ defmodule GetQueryTest do
           biggest_aircraft: [
             aircraft: %{
               "is_list" => false,
-              "sql" => "SELECT * FROM `grocerify.aircraft` WHERE is_deleted == 0"
+              "sql" => "SELECT * FROM `grocerify.aircraft` WHERE is_deleted = 0"
             }
           ]
         ],
@@ -171,7 +171,7 @@ defmodule GetQueryTest do
           list_of_shops: [
             shops: %{
               "is_list" => true,
-              "sql" => "SELECT * FROM `grocerify.shops` WHERE is_deleted == 0"
+              "sql" => "SELECT * FROM `grocerify.shops` WHERE is_deleted = 0"
             }
           ]
         ]
