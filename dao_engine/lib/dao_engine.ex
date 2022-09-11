@@ -110,17 +110,20 @@ defmodule DaoEngine do
       ensure_table_response =
         Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
 
+      # Utils.log("flanken", query_config, str_node_name_key == "employeexes")
+
       # Utils.log("ensure_table_exist", ensure_table_response)
 
-      {context, any_alter_table_sql} =
+      {context, any_alter_table_sql, is_def_only} =
         case ensure_table_response do
-          {context, sql} -> {context, sql}
-          context -> {context, ""}
+          {context, sql} -> {context, sql, false}
+          {context, sql, is_def_only} -> {context, sql, is_def_only}
+          context -> {context, "", false}
         end
 
       insert_cols_sql =
-        if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
-             Map.get(query_config, "dao@def_only") == true do
+        if (is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
+              Map.get(query_config, "dao@def_only") == true) || is_def_only == true do
           # no insert sql will be generated
           ""
         else
@@ -191,7 +194,7 @@ defmodule DaoEngine do
           end
         end
 
-      # Utils.log("insert_cols_sql", insert_cols_sql, is_list(query_config))
+      # lets try to work on the foreign keys if any
 
       cond do
         insert_cols_sql != "" ->
@@ -269,10 +272,17 @@ defmodule DaoEngine do
       ensure_table_response =
         Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
 
-      {context, any_alter_table_sql} =
+      # {context, any_alter_table_sql} =
+      #   case ensure_table_response do
+      #     {context, sql} -> {context, sql}
+      #     context -> {context, ""}
+      #   end
+
+      {context, any_alter_table_sql, is_def_only} =
         case ensure_table_response do
-          {context, sql} -> {context, sql}
-          context -> {context, ""}
+          {context, sql} -> {context, sql, true}
+          {context, sql, is_def_only} -> {context, sql, is_def_only}
+          context -> {context, "", true}
         end
 
       insert_sql =
@@ -413,10 +423,16 @@ defmodule DaoEngine do
 
       # Utils.log("ensure_table_exist", ensure_table_response)
 
-      {context, any_alter_table_sql} =
+      # {context, any_alter_table_sql} =
+      #   case ensure_table_response do
+      #     {context, sql} -> {context, sql}
+      #     context -> {context, ""}
+      #   end
+      {context, any_alter_table_sql, is_def_only} =
         case ensure_table_response do
-          {context, sql} -> {context, sql}
-          context -> {context, ""}
+          {context, sql} -> {context, sql, true}
+          {context, sql, is_def_only} -> {context, sql, is_def_only}
+          context -> {context, "", true}
         end
 
       update_sql =

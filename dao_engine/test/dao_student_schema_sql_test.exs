@@ -9,7 +9,14 @@ defmodule DaoStudentSchemaSqlTest do
       expected_results = expected_schema_results()
       expected_auto_changes_results = expeted_changes_sql()
 
-      modified_context = Database.gen_sql_ensure_database_exists(context)
+      ensure_table_response = Database.gen_sql_ensure_database_exists(context)
+
+      {modified_context, _any_alter_table_sql, _is_def_only} =
+        case ensure_table_response do
+          {modified_context, sql} -> {modified_context, sql, true}
+          {modified_context, sql, is_def_only} -> {modified_context, sql, is_def_only}
+          modified_context -> {modified_context, "", true}
+        end
 
       assert expected_results == modified_context["schema"]
       assert expected_auto_changes_results == modified_context["auto_schema_changes"]
@@ -65,7 +72,14 @@ defmodule DaoStudentSchemaSqlTest do
       expected_results = expected_schema_v_1_1_results()
       expected_auto_changes_results = expeted_changes_v_1_1_sql()
 
-      modified_context = Database.gen_sql_ensure_database_exists(context)
+      ensure_table_response = Database.gen_sql_ensure_database_exists(context)
+
+      {modified_context, _any_alter_table_sql, _is_def_only} =
+        case ensure_table_response do
+          {modified_context, sql} -> {modified_context, sql, true}
+          {modified_context, sql, is_def_only} -> {modified_context, sql, is_def_only}
+          modified_context -> {modified_context, "", true}
+        end
 
       assert expected_results == modified_context["schema"]
       assert expected_auto_changes_results == modified_context["auto_schema_changes"]

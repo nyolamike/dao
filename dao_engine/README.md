@@ -119,3 +119,25 @@ however any local  "dao@timestamps": false, will overrride this
 - WHen data is being inserted as an array without specifying columns into a table one needs to follow the alphabetic order of the columns
 
 *** right now we need to add the ability for all sqls in a named query to be tracked
+
+** can it work starting with an existing db and them auto generating a schema from it and then use that
+
+** now given a query like the one below 
+query = [
+      add: [
+        employees_table: [
+          employeexx: %{
+            "emp_id" => "pk",
+            "first_name" => "str 40",
+            "last_name" => "str 40",
+            "birth_day" => "date",
+            "sex" => "str 1",
+            "sex" => "int",
+            "super_id" => "int",
+            "branch_id" => "int"
+          }
+        ]
+      ]
+    ]
+  in the context of add, if all columns are definitions then it will auto infer "dao@def_only" => true
+  there is no need to have that as a flag

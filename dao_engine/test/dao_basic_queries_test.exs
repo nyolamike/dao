@@ -619,8 +619,8 @@ defmodule DaoBasicQueriesTest do
       ]
     }
 
-    #nyd: imagine in this type of thing that the list ["Clare", "Kate", "Mike"]
-    #nyd: could have been first queried and then used here
+    # nyd: imagine in this type of thing that the list ["Clare", "Kate", "Mike"]
+    # nyd: could have been first queried and then used here
 
     assert expected_results == results
   end
@@ -647,7 +647,7 @@ defmodule DaoBasicQueriesTest do
             "dao@where" => {
               {"name", "in", ["Clare", "Kate", "Mike"]},
               "AND",
-              {"student_id",">", 2}
+              {"student_id", ">", 2}
             }
           }
         ]
@@ -679,8 +679,8 @@ defmodule DaoBasicQueriesTest do
       ]
     }
 
-    #nyd: imagine in this type of thing that the list ["Clare", "Kate", "Mike"]
-    #nyd: could have been first queried and then used here
+    # nyd: imagine in this type of thing that the list ["Clare", "Kate", "Mike"]
+    # nyd: could have been first queried and then used here
 
     assert expected_results == results
   end

@@ -12,6 +12,7 @@ defmodule Table do
 
     if context["schema"] |> Map.has_key?(plural_table_name) == false do
       query_config = preprocess_query_config(context, query_config)
+      Utils.log("checkout", query_config, plural_table_name == "employeexes")
       gen_sql_table(context, plural_table_name, query_config)
     else
       # ensure that it has all the columns specified in the query config
@@ -68,14 +69,16 @@ defmodule Table do
       if Map.has_key?(query_config, "columns") == true do
         acc = %{
           "sql" => "",
-          "table_schema" => %{}
+          "table_schema" => %{},
+          "is_def_only" => true,
+          "foreign_keys_sql" => []
         }
 
         Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
-          skips = ["dao@where", "dao@def_only"]
+          skips = Utils.skip_keys()
 
           if column_name_key in skips do
-            # just continure
+            # just continue
             acc
           else
             sql_acc = String.trim(acc["sql"])
@@ -85,13 +88,46 @@ defmodule Table do
             schema = Map.put(table_schema, column_name_key, col_def["config"])
             comma = if sql_acc == "", do: "", else: ", "
             sql = sql_acc <> comma <> String.trim(col_def["sql"])
-            %{"sql" => sql, "table_schema" => schema}
+            # check if we have a col def
+            is_def_only =
+              if acc["is_def_only"] == false,
+                do: false,
+                else: Map.get(col_def, "is_def_only", true)
+
+            foreign_sql =
+              if Map.has_key?(col_def["config"], "fk") do
+                plural_parent_table_name =
+                  col_def["config"] |> Map.get("fk") |> Inflex.pluralize()
+
+                linked_column_name = column_config["on"]
+
+                on_delete_sql =
+                  if column_config["on_delete"] in [nil, "null", "NULL"],
+                    do: " SET NULL",
+                    else: " CASCADE"
+
+                fsql =
+                  "FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+
+                acc["foreign_keys_sql"] ++ [fsql]
+              else
+                acc["foreign_keys_sql"]
+              end
+
+            %{
+              "sql" => sql,
+              "table_schema" => schema,
+              "is_def_only" => is_def_only,
+              "foreign_keys_sql" => foreign_sql
+            }
           end
         end)
       else
         %{
           "sql" => "",
-          "table_schema" => %{}
+          "table_schema" => %{},
+          "is_def_only" => true,
+          "foreign_keys_sql" => []
         }
       end
 
@@ -99,7 +135,19 @@ defmodule Table do
       if Map.has_key?(query_config, "use_standard_timestamps") do
         query_config["use_standard_timestamps"]
       else
-        true
+        # consult context
+        use_standard_timestamps =
+          if Map.has_key?(context, "dao@timestamps") do
+            context["dao@timestamps"]
+          else
+            true
+          end
+
+        if Map.has_key?(context, "use_standard_timestamps") do
+          context["use_standard_timestamps"]
+        else
+          use_standard_timestamps
+        end
       end
 
     default_table_schema =
@@ -146,8 +194,10 @@ defmodule Table do
         }
       end
 
-    sql =
-      "CREATE TABLE #{sql_table_name(context, plural_table_name)} (#{default_standard_col_def_pk["sql"]}"
+    foreign_keys_lines = table_col_def["foreign_keys_sql"] |> Enum.join(",")
+
+    pk_sql = default_standard_col_def_pk["sql"]
+    sql = "CREATE TABLE #{sql_table_name(context, plural_table_name)} (#{pk_sql}"
 
     table_col_def_sql = String.trim(table_col_def["sql"])
     default_table_schema_sql = default_table_schema["sql"]
@@ -157,12 +207,20 @@ defmodule Table do
         do: "",
         else: ", "
 
-    first_comma = if String.trim(default_standard_col_def_pk["sql"]) == "", do: "", else: ", "
-    sql = sql <> first_comma <> table_col_def_sql <> comma <> default_table_schema_sql
+    first_comma = if String.trim(pk_sql) == "", do: "", else: ", "
+
+    sql =
+      sql <>
+        first_comma <>
+        String.trim(table_col_def_sql) <> comma <> String.trim(default_table_schema_sql)
+
     primary_keys_line_sql = primary_keys_line["sql"]
     comma = if String.trim(primary_keys_line_sql) == "", do: "", else: ", "
-    sql = sql <> comma <> primary_keys_line_sql
-    sql = sql <> ")"
+    sql = sql <> comma <> String.trim(primary_keys_line_sql)
+    sql = String.trim(sql)
+    sql = if String.ends_with?(sql, ","), do: String.trim_trailing(sql, ","), else: sql
+    comma = if String.trim(foreign_keys_lines) == "", do: "", else: ", "
+    sql = "#{sql}#{comma}#{foreign_keys_lines})"
 
     auto_schema_changes = context["auto_schema_changes"] ++ [sql]
     context = %{context | "auto_schema_changes" => auto_schema_changes}
@@ -171,9 +229,10 @@ defmodule Table do
     table_schema = Map.merge(default_table_schema["table_schema"], table_col_def["table_schema"])
 
     schema = Map.put(context["schema"], plural_table_name, table_schema)
-    %{context | "schema" => schema}
+    {%{context | "schema" => schema}, "", table_col_def["is_def_only"]}
   end
 
+  @spec gen_sql_cols(any, any, nil | maybe_improper_list | map) :: {any, binary}
   def gen_sql_cols(context, plural_table_name, generated_columns_sql) do
     # cbh
     sql = String.trim(generated_columns_sql["sql"])
@@ -224,21 +283,51 @@ defmodule Table do
         query_config
       )
 
+    # consult context
+    context_use_default_pk =
+      if Map.has_key?(context, "dao@use_default_pk") do
+        context["dao@use_default_pk"]
+      else
+        true
+      end
+
+    context_use_default_pk =
+      if Map.has_key?(context, "use_default_pk") do
+        context["use_default_pk"]
+      else
+        context_use_default_pk
+      end
+
     {query_config, config_table_def} =
       Utils.ensure_key(
         config_table_def,
         "dao@use_default_pk",
         "use_default_pk",
-        true,
+        context_use_default_pk,
         query_config
       )
+
+    # consult context
+    context_use_standard_timestamps =
+      if Map.has_key?(context, "dao@timestamps") do
+        context["dao@timestamps"]
+      else
+        true
+      end
+
+    context_use_standard_timestamps =
+      if Map.has_key?(context, "use_standard_timestamps") do
+        context["use_standard_timestamps"]
+      else
+        context_use_standard_timestamps
+      end
 
     {query_config, config_table_def} =
       Utils.ensure_key(
         config_table_def,
         "dao@timestamps",
         "use_standard_timestamps",
-        true,
+        context_use_standard_timestamps,
         query_config
       )
 
@@ -248,6 +337,15 @@ defmodule Table do
         config_table_def,
         "dao@pks",
         "use_primary_keys",
+        [],
+        query_config
+      )
+
+    {query_config, config_table_def} =
+      Utils.ensure_key(
+        config_table_def,
+        "dao@fks",
+        "use_foreign_keys",
         [],
         query_config
       )
