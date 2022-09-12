@@ -87,7 +87,6 @@ defmodule Table do
             sql_acc = String.trim(acc["sql"])
             table_schema = acc["table_schema"]
             col_def = Column.define_column(context, column_name_key, column_config)
-            Utils.log("col_def", col_def, column_config == "str 44")
             # update the schema
             schema = Map.put(table_schema, column_name_key, col_def["config"])
             comma = if sql_acc == "", do: "", else: ", "
@@ -103,10 +102,10 @@ defmodule Table do
                 plural_parent_table_name =
                   col_def["config"] |> Map.get("fk") |> Inflex.pluralize()
 
-                linked_column_name = column_config["on"]
+                linked_column_name = Map.get(col_def["config"], "on")
 
                 on_delete_sql =
-                  if column_config["on_delete"] in [nil, "null", "NULL"],
+                  if Map.get(col_def["config"], "on_delete") in [nil, "null", "NULL"],
                     do: " SET NULL",
                     else: " CASCADE"
 
@@ -135,6 +134,11 @@ defmodule Table do
         }
       end
 
+    # scan for foreign keys
+    foreign_results = Column.process_foreign_keys(table_col_def, query_config)
+    foreign_keys_table_schema = foreign_results["table_schema"]
+    foreign_keys_sql = foreign_results["sql"]
+
     set_default_standard_timestamps =
       if Map.has_key?(query_config, "use_standard_timestamps") do
         query_config["use_standard_timestamps"]
@@ -154,6 +158,7 @@ defmodule Table do
         end
       end
 
+    # scan for foreign keys
     default_table_schema =
       if set_default_standard_timestamps == true do
         created_at_col_def = Column.define_column(context, "created_at", "datetime")
@@ -198,7 +203,9 @@ defmodule Table do
         }
       end
 
-    foreign_keys_lines = table_col_def["foreign_keys_sql"] |> Enum.join(",")
+    # foreign_keys_lines = (table_col_def["foreign_keys_sql"] ++ [foreign_keys_sql]) |> Enum.join(",")
+    foreign_keys_lines =
+      (table_col_def["foreign_keys_sql"] ++ [foreign_keys_sql]) |> Enum.join(",")
 
     pk_sql = default_standard_col_def_pk["sql"]
     sql = "CREATE TABLE #{sql_table_name(context, plural_table_name)} (#{pk_sql}"
@@ -224,13 +231,35 @@ defmodule Table do
     sql = String.trim(sql)
     sql = if String.ends_with?(sql, ","), do: String.trim_trailing(sql, ","), else: sql
     comma = if String.trim(foreign_keys_lines) == "", do: "", else: ", "
-    sql = "#{sql}#{comma}#{foreign_keys_lines})"
+    sql = "#{sql}#{comma}#{String.trim_trailing(foreign_keys_lines, ",")})"
 
     auto_schema_changes = context["auto_schema_changes"] ++ [sql]
     context = %{context | "auto_schema_changes" => auto_schema_changes}
     # update the schema
 
     table_schema = Map.merge(default_table_schema["table_schema"], table_col_def["table_schema"])
+
+    table_schema =
+      if foreign_keys_sql != "" do
+        # just copy over the foregin key related issues
+        Enum.reduce(foreign_keys_table_schema, table_schema, fn {tbl_name, table_config},
+                                                                acc_table_schema ->
+          # we are interested in only those cols that hvae keys
+          if Map.has_key?(table_config, "fk") do
+            table_update =
+              acc_table_schema[tbl_name]
+              |> Map.put("on", table_config["on"])
+              |> Map.put("fk", table_config["fk"])
+              |> Map.put("is_foreign_key", true)
+
+            %{acc_table_schema | tbl_name => table_update}
+          else
+            acc_table_schema
+          end
+        end)
+      else
+        table_schema
+      end
 
     schema = Map.put(context["schema"], plural_table_name, table_schema)
     {%{context | "schema" => schema}, "", table_col_def["is_def_only"]}

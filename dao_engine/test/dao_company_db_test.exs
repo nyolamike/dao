@@ -791,8 +791,1387 @@ defmodule DaoCompanyDbTest do
 
     results = Dao.execute(context, query)
 
-    IO.inspect(results)
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_db.clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)"
+        ],
+        "dao@timestamps" => false,
+        "dao@use_default_pk" => false,
+        "database_name" => "company_db",
+        "database_type" => "mysql",
+        "schema" => %{
+          "branches" => %{
+            "branch_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "branch_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "mgr_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "mgr_start_date" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            }
+          },
+          "clients" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "on" => "emp_id"
+            },
+            "client_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "client_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 44,
+              "sql" => "VARCHAR(44)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "employees" => %{
+            "birth_day" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            },
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "first_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "last_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "sex" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            },
+            "super_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            }
+          }
+        }
+      },
+      "root_cmd_node_list" => [
+        add: [client_table: [client: %{"is_list" => false, "sql" => ""}]]
+      ]
+    }
+
+    assert expected_results == results
   end
 
+  test "5. creates works_with table composite primary keys 2:23:24 / 4:20:38 Creating Company Database" do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "company_db",
+      "schema" => %{
+        "branches" => %{
+          "branch_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "branch_name" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "sql" => "VARCHAR(40)",
+            "type" => "string",
+            "unique" => false
+          },
+          "mgr_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "mgr_start_date" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "is_primary_key" => false,
+            "required" => "",
+            "sql" => "DATE",
+            "type" => "date",
+            "unique" => false
+          }
+        },
+        "clients" => %{
+          "branch_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "emp_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "client_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "client_name" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 44,
+            "sql" => "VARCHAR(44)",
+            "type" => "string",
+            "unique" => false
+          }
+        },
+        "employees" => %{
+          "birth_day" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "is_primary_key" => false,
+            "required" => "",
+            "sql" => "DATE",
+            "type" => "date",
+            "unique" => false
+          },
+          "branch_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "branches",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "branch_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "emp_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "first_name" => %{
+            "auto_increment" => false,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "type" => "string",
+            "unique" => false
+          },
+          "last_name" => %{
+            "auto_increment" => false,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "type" => "string",
+            "unique" => false
+          },
+          "sex" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer",
+            "unique" => false
+          },
+          "super_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "emp_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          }
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true,
+      "dao@timestamps" => false,
+      "dao@use_default_pk" => false
+    }
 
+    # nyd: the only issue with this query is that "dao@pks" wont update the columns in the dao schema context to show that they ae primary keys
+    query = [
+      add: [
+        works_with_table: [
+          works_with: %{
+            "emp_id" => %{
+              "fk" => "employee",
+              "on" => "emp_id",
+              "on_delete" => "cascade"
+            },
+            "client_id" => "fk",
+            "total_sales" => "int",
+            "dao@pks" => ["emp_id", "client_id"]
+            # "emp_id" => "pk",
+            # "client_id" => "pk",
+            # "total_sales" => "int",
+            # "dao@fks" => %{
+            #   "client_id" => %{
+            #     "fk" => "client",
+            #     "on" => "client_id",
+            #     "on_delete" => "cascade"
+            #   },
+            #   "emp_id" => %{
+            #     "fk" => "employee",
+            #     "on" => "emp_id",
+            #     "on_delete" => "cascade"
+            #   }
+            # }
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_db.works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)"
+        ],
+        "dao@timestamps" => false,
+        "dao@use_default_pk" => false,
+        "database_name" => "company_db",
+        "database_type" => "mysql",
+        "schema" => %{
+          "branches" => %{
+            "branch_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "branch_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "mgr_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "mgr_start_date" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            }
+          },
+          "clients" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "client_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "client_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 44,
+              "sql" => "VARCHAR(44)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "employees" => %{
+            "birth_day" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            },
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "first_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "last_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "sex" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            },
+            "super_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            }
+          },
+          "works_withs" => %{
+            "client_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "clients",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "client_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "total_sales" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            }
+          }
+        }
+      },
+      "root_cmd_node_list" => [
+        add: [works_with_table: [works_with: %{"is_list" => false, "sql" => ""}]]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "6. creates branch_supplier table composite primary keys 2:24:22 / 4:20:38 Creating Company Database" do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "company_db",
+      "schema" => %{
+        "branches" => %{
+          "branch_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "branch_name" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "sql" => "VARCHAR(40)",
+            "type" => "string",
+            "unique" => false
+          },
+          "mgr_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "mgr_start_date" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "is_primary_key" => false,
+            "required" => "",
+            "sql" => "DATE",
+            "type" => "date",
+            "unique" => false
+          }
+        },
+        "clients" => %{
+          "branch_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "emp_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "client_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "client_name" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 44,
+            "sql" => "VARCHAR(44)",
+            "type" => "string",
+            "unique" => false
+          }
+        },
+        "employees" => %{
+          "birth_day" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "is_primary_key" => false,
+            "required" => "",
+            "sql" => "DATE",
+            "type" => "date",
+            "unique" => false
+          },
+          "branch_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "branches",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "branch_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          },
+          "emp_id" => %{
+            "auto_increment" => true,
+            "default" => nil,
+            "is_primary_key" => true,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+            "type" => "integer"
+          },
+          "first_name" => %{
+            "auto_increment" => false,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "type" => "string",
+            "unique" => false
+          },
+          "last_name" => %{
+            "auto_increment" => false,
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 40,
+            "type" => "string",
+            "unique" => false
+          },
+          "sex" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer",
+            "unique" => false
+          },
+          "super_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "emp_id",
+            "on_delete" => nil,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer"
+          }
+        },
+        "works_withs" => %{
+          "client_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "clients",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "client_id",
+            "on_delete" => "cascade",
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) NOT NULL",
+            "type" => "integer"
+          },
+          "emp_id" => %{
+            "auto_increment" => false,
+            "default" => nil,
+            "fk" => "employees",
+            "is_foreign_key" => true,
+            "is_primary_key" => false,
+            "on" => "emp_id",
+            "on_delete" => "cascade",
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30) NOT NULL",
+            "type" => "integer"
+          },
+          "total_sales" => %{
+            "auto_increment" => false,
+            "default" => "",
+            "is_primary_key" => false,
+            "required" => false,
+            "size" => 30,
+            "sql" => "INT(30)",
+            "type" => "integer",
+            "unique" => false
+          }
+        }
+      },
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true,
+      "dao@timestamps" => false,
+      "dao@use_default_pk" => false
+    }
+
+    # nyd: the only issue with this query is that "dao@pks" wont update the columns in the dao schema context to show that they ae primary keys
+    query = [
+      add: [
+        branch_supplier_table: [
+          branch_supplier: %{
+            "branch_id" => "fk",
+            "supplier_name" => "str 40",
+            "supplier_type" => "str 40",
+            "dao@pks" => ["branch_id", "supplier_name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_db.branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
+        ],
+        "dao@timestamps" => false,
+        "dao@use_default_pk" => false,
+        "database_name" => "company_db",
+        "database_type" => "mysql",
+        "schema" => %{
+          "branch_suppliers" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "supplier_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "supplier_type" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "branches" => %{
+            "branch_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "branch_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "mgr_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "mgr_start_date" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            }
+          },
+          "clients" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "client_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "client_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 44,
+              "sql" => "VARCHAR(44)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "employees" => %{
+            "birth_day" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            },
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "first_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "last_name" => %{
+              "auto_increment" => false,
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "type" => "string",
+              "unique" => false
+            },
+            "sex" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            },
+            "super_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            }
+          },
+          "works_withs" => %{
+            "client_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "clients",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "client_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "total_sales" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            }
+          }
+        }
+      },
+      "root_cmd_node_list" => [
+        add: [branch_supplier_table: [branch_supplier: %{"is_list" => false, "sql" => ""}]]
+      ]
+    }
+
+    assert expected_results == results
+  end
+
+  test "7.  Company Database - Creating all database tables in one query" do
+    context = %{
+      "database_type" => "mysql",
+      "database_name" => "company_db",
+      "schema" => %{},
+      "auto_schema_changes" => [],
+      "auto_alter_db" => true,
+      "dao@timestamps" => false,
+      "dao@use_default_pk" => false
+    }
+
+    query = [
+      add: [
+        employees_table: [
+          employee: %{
+            "emp_id" => "pk",
+            "first_name" => "str 40",
+            "last_name" => "str 40",
+            "birth_day" => "date",
+            "sex" => "str 1",
+            "sex" => "int",
+            "super_id" => "int",
+            "branch_id" => "int"
+          }
+        ],
+        branches_table: [
+          branch: %{
+            "branch_id" => "pk",
+            "branch_name" => %{
+              "type" => "string",
+              "size" => 40
+            },
+            "mgr_id" => %{
+              "fk" => "employee",
+              "on" => "emp_id",
+              "on_delete" => nil
+            },
+            "mgr_start_date" => "date"
+          }
+        ],
+        employee_foreign_keys: [
+          employee: %{
+            "dao@fks" => %{
+              "branch_id" => %{
+                "fk" => "branch",
+                "on" => "branch_id",
+                "on_delete" => nil
+              },
+              "super_id" => %{
+                "fk" => "employee",
+                "on" => "emp_id",
+                "on_delete" => nil
+              }
+            }
+          }
+        ],
+        client_table: [
+          client: %{
+            "client_id" => "pk",
+            "client_name" => "str 44",
+            "branch_id" => "int",
+            "dao@fks" => %{
+              "branch_id" => %{
+                "fk" => "employee",
+                "on" => "emp_id",
+                "on_delete" => nil
+              }
+            }
+          }
+        ],
+        works_with_table: [
+          works_with: %{
+            "emp_id" => %{
+              "fk" => "employee",
+              "on" => "emp_id",
+              "on_delete" => "cascade"
+            },
+            "client_id" => "fk",
+            "total_sales" => "int",
+            "dao@pks" => ["emp_id", "client_id"]
+          }
+        ],
+        branch_supplier_table: [
+          branch_supplier: %{
+            "branch_id" => "fk",
+            "supplier_name" => "str 40",
+            "supplier_type" => "str 40",
+            "dao@pks" => ["branch_id", "supplier_name"]
+          }
+        ]
+      ]
+    ]
+
+    results = Dao.execute(context, query)
+
+    expected_results = %{
+      "context" => %{
+        "auto_alter_db" => true,
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex INT(30), super_id INT(30))",
+          "CREATE TABLE `company_db.branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
+          "dao@skip: ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL",
+          "CREATE TABLE `company_db.clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
+          "CREATE TABLE `company_db.works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)",
+          "CREATE TABLE `company_db.branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
+        ],
+        "dao@timestamps" => false,
+        "dao@use_default_pk" => false,
+        "database_name" => "company_db",
+        "database_type" => "mysql",
+        "schema" => %{
+          "branch_suppliers" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "supplier_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "supplier_type" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "branches" => %{
+            "branch_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "branch_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "mgr_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "mgr_start_date" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            }
+          },
+          "clients" => %{
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            },
+            "client_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "client_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 44,
+              "sql" => "VARCHAR(44)",
+              "type" => "string",
+              "unique" => false
+            }
+          },
+          "employees" => %{
+            "birth_day" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "is_primary_key" => false,
+              "required" => "",
+              "sql" => "DATE",
+              "type" => "date",
+              "unique" => false
+            },
+            "branch_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "branches",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "branch_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => true,
+              "default" => nil,
+              "is_primary_key" => true,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+              "type" => "integer"
+            },
+            "first_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "last_name" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 40,
+              "sql" => "VARCHAR(40)",
+              "type" => "string",
+              "unique" => false
+            },
+            "sex" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            },
+            "super_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => nil,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer"
+            }
+          },
+          "works_withs" => %{
+            "client_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "clients",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "client_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "emp_id" => %{
+              "auto_increment" => false,
+              "default" => nil,
+              "fk" => "employees",
+              "is_foreign_key" => true,
+              "is_primary_key" => false,
+              "on" => "emp_id",
+              "on_delete" => "cascade",
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30) NOT NULL",
+              "type" => "integer"
+            },
+            "total_sales" => %{
+              "auto_increment" => false,
+              "default" => "",
+              "is_primary_key" => false,
+              "required" => false,
+              "size" => 30,
+              "sql" => "INT(30)",
+              "type" => "integer",
+              "unique" => false
+            }
+          }
+        }
+      },
+      "root_cmd_node_list" => [
+        add: [
+          branch_supplier_table: [
+            branch_supplier: %{"is_list" => false, "sql" => ""}
+          ],
+          works_with_table: [works_with: %{"is_list" => false, "sql" => ""}],
+          client_table: [client: %{"is_list" => false, "sql" => ""}],
+          employee_foreign_keys: [
+            employee: %{
+              "is_list" => false,
+              "sql" =>
+                "ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
+            }
+          ],
+          branches_table: [branch: %{"is_list" => false, "sql" => ""}],
+          employees_table: [employee: %{"is_list" => false, "sql" => ""}]
+        ]
+      ]
+    }
+
+    assert expected_results == results
+  end
 end

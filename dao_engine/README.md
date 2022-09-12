@@ -122,6 +122,27 @@ however any local  "dao@timestamps": false, will overrride this
 
 ** can it work starting with an existing db and them auto generating a schema from it and then use that
 
+**nyd: when you call this "dao@pks" => ["emp_id", "client_id"]
+in a structure like this one 
+ query = [
+      add: [
+        client_table: [
+          works_with: %{
+            "emp_id" => %{
+              "fk" => "employee",
+              "on" => "emp_id",
+              "on_delete" => "cascade"
+            },
+            "client_id" => "fk",
+            "total_sales" => "int",
+            "dao@pks" => ["emp_id", "client_id"]
+          }
+        ]
+      ]
+    ]
+it should be able to update the schema with making the table config have the specified pk config attributes
+
+
 ** now given a query like the one below 
 query = [
       add: [
@@ -145,6 +166,7 @@ query = [
 
 
 > Quering Interface (DSL), using data structures and flags
+> named queries
 > Generating SQL from Queries
 > Executing queries 
 > Modifiying Context
@@ -152,6 +174,8 @@ query = [
 
 
 Road Ahead Not in Any Order
+> making named queried optional/ one can opt out of using named queries (distant near future)
+> Using resulta of a previous query and embedding them in a new query or referencung them
 > Documentation
 > Tutorilas
 > Client UI libraries/ Language Libraries
@@ -189,4 +213,5 @@ Road Ahead Not in Any Order
 > Cache State
 > Event Bus/ Queue e.g RabitmQ
 > SUpport for Postgress, MSSQL. Oracle
+> Refs for optimissation to avoid unecessary repeation when returning data.  but this is a seeting 
 

@@ -454,6 +454,7 @@ defmodule Column do
             end
         end
       end)
+
     define(config)
   end
 
@@ -714,5 +715,51 @@ defmodule Column do
   def sql_column_name(context, table_name, column_name) do
     plural_table_name = Inflex.pluralize(table_name)
     "`#{context["database_name"]}.#{plural_table_name}.#{column_name}`"
+  end
+
+  def process_foreign_keys(table_col_def, query_config) do
+    if Map.has_key?(query_config, "use_foreign_keys") == true do
+      accumulata = %{
+        "table_schema" => table_col_def["table_schema"],
+        "sql" => ""
+      }
+
+      Enum.reduce(query_config["use_foreign_keys"], accumulata, fn {column_name_key,
+                                                                    foreign_key_config},
+                                                                   acc ->
+        skips = Utils.skip_keys()
+
+        case column_name_key in skips do
+          false ->
+            sql_acc = String.trim(acc["sql"])
+            # nyd: we need to check if columns already exist
+            comma = if sql_acc == "", do: "", else: ", "
+            linked_column_name = foreign_key_config["on"]
+            plural_parent_table_name = foreign_key_config["fk"] |> Inflex.pluralize()
+
+            on_delete_sql =
+              if foreign_key_config["on_delete"] in [nil, "null", "NULL"],
+                do: " SET NULL",
+                else: " CASCADE"
+
+            # change column_name_key in the schema to a foreign key
+            fk_def = define(foreign_key_config)
+            updated_schema = Map.put(acc["table_schema"], column_name_key, fk_def)
+
+            temp_sql =
+              "#{sql_acc}#{comma}ADD FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+
+            %{"table_schema" => updated_schema, "sql" => temp_sql}
+
+          true ->
+            acc
+        end
+      end)
+    else
+      %{
+        "table_schema" => table_col_def["table_schema"],
+        "sql" => ""
+      }
+    end
   end
 end
