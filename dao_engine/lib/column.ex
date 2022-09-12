@@ -16,6 +16,8 @@ defmodule Column do
       "required" => false,
       "is_foreign_key" => true,
       "fk" => plural_table_name,
+      "on" => config["on"],
+      "on_delete" => config["on_delete"],
       "sql" => "INT(30)#{required_sql}"
     }
   end
@@ -424,33 +426,35 @@ defmodule Column do
     parts = String.split(parts_str, " ")
     config = if t == [], do: config, else: Map.put(config, "default", t |> hd() |> String.trim())
 
-    Enum.reduce(parts, config, fn part, acc_conf ->
-      part = String.trim(part)
+    config =
+      Enum.reduce(parts, config, fn part, acc_conf ->
+        part = String.trim(part)
 
-      cond do
-        part in ["unq", "uni", "un", "u"] ->
-          Map.put(acc_conf, "unique", true)
+        cond do
+          part in ["unq", "uni", "un", "u"] ->
+            Map.put(acc_conf, "unique", true)
 
-        part in ["req", "rq", "r", "nn"] ->
-          Map.put(acc_conf, "required", true)
+          part in ["req", "rq", "r", "nn"] ->
+            Map.put(acc_conf, "required", true)
 
-        part in ["null", "n"] ->
-          Map.put(acc_conf, "required", false)
+          part in ["null", "n"] ->
+            Map.put(acc_conf, "required", false)
 
-        part in ["pk", "p"] ->
-          Map.put(acc_conf, "is_primary_key", true)
+          part in ["pk", "p"] ->
+            Map.put(acc_conf, "is_primary_key", true)
 
-        part in ["ai", "inc", "auto"] ->
-          Map.put(acc_conf, "auto_increment", true)
+          part in ["ai", "inc", "auto"] ->
+            Map.put(acc_conf, "auto_increment", true)
 
-        true ->
-          with {size, _} <- Integer.parse(part) do
-            Map.put(acc_conf, "size", size)
-          else
-            _ -> acc_conf
-          end
-      end
-    end)
+          true ->
+            with {size, _} <- Integer.parse(part) do
+              Map.put(acc_conf, "size", size)
+            else
+              _ -> acc_conf
+            end
+        end
+      end)
+    define(config)
   end
 
   @spec define_columnx(map, <<_::128>>, list) :: %{optional(<<_::24, _::_*24>>) => binary | %{}}
@@ -569,15 +573,24 @@ defmodule Column do
         }
       end
 
-    sql =
+    %{
+      "table_schema" => table_schema,
+      "sql" => foreign_keys_sql
+    } =
       if Map.has_key?(query_config, "use_foreign_keys") == true do
-        Enum.reduce(query_config["use_foreign_keys"], "", fn {column_name_key, foreign_key_config},
-                                                             acc ->
+        accumulata = %{
+          "table_schema" => temp_results["table_schema"],
+          "sql" => ""
+        }
+
+        Enum.reduce(query_config["use_foreign_keys"], accumulata, fn {column_name_key,
+                                                                      foreign_key_config},
+                                                                     acc ->
           skips = Utils.skip_keys()
 
           case column_name_key in skips do
             false ->
-              sql_acc = String.trim(acc)
+              sql_acc = String.trim(acc["sql"])
               # nyd: we need to check if columns already exist
               comma = if sql_acc == "", do: "", else: ", "
               linked_column_name = foreign_key_config["on"]
@@ -588,25 +601,42 @@ defmodule Column do
                   do: " SET NULL",
                   else: " CASCADE"
 
-              "#{sql_acc}#{comma}ADD FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+              # change column_name_key in the schema to a foreign key
+              fk_def = define(foreign_key_config)
+              updated_schema = Map.put(acc["table_schema"], column_name_key, fk_def)
+
+              temp_sql =
+                "#{sql_acc}#{comma}ADD FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+
+              %{"table_schema" => updated_schema, "sql" => temp_sql}
 
             true ->
               acc
           end
         end)
       else
-        ""
+        %{
+          "table_schema" => temp_results["table_schema"],
+          "sql" => ""
+        }
       end
+
     temp_results_sql = temp_results["sql"]
+
     comma =
       cond do
-        temp_results_sql == "" && sql  == "" -> ""
-        temp_results_sql != "" && sql  == "" -> ""
-        temp_results_sql == "" && sql  != "" -> ""
-        temp_results_sql != "" && sql  != "" -> ", "
+        temp_results_sql == "" && foreign_keys_sql == "" -> ""
+        temp_results_sql != "" && foreign_keys_sql == "" -> ""
+        temp_results_sql == "" && foreign_keys_sql != "" -> ""
+        temp_results_sql != "" && foreign_keys_sql != "" -> ", "
         true -> ""
       end
-    %{temp_results | "sql" => "#{temp_results_sql}#{comma}#{sql}"}
+
+    %{
+      temp_results
+      | "sql" => "#{temp_results_sql}#{comma}#{foreign_keys_sql}",
+        "table_schema" => table_schema
+    }
   end
 
   def value_to_col_type(value) when is_integer(value), do: "integer"

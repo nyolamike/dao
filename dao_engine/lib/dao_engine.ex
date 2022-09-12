@@ -171,7 +171,7 @@ defmodule DaoEngine do
 
               gen_values_sql =
                 Enum.reduce(query_config, acc_4_map, fn {key, value}, acc ->
-                  skip = ["dao@def_only"]
+                  skip = Utils.skip_keys()
 
                   if key in skip do
                     acc
@@ -187,7 +187,9 @@ defmodule DaoEngine do
                 end)
 
               # nyd: throw an error if there are no columns or values
-              "#{sql}(#{gen_values_sql["col_names_sql"]}) VALUES(#{gen_values_sql["col_vals_sql"]})"
+              cols = String.trim(gen_values_sql["col_names_sql"])
+              values = String.trim(gen_values_sql["col_vals_sql"])
+              if values == "", do: "", else: "#{sql}(#{cols}) VALUES(#{values})"
 
             true ->
               throw("Unknown query config: gen values sql")

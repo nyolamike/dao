@@ -12,7 +12,6 @@ defmodule Table do
 
     if context["schema"] |> Map.has_key?(plural_table_name) == false do
       query_config = preprocess_query_config(context, query_config)
-      Utils.log("checkout", query_config, plural_table_name == "employeexes")
       gen_sql_table(context, plural_table_name, query_config)
     else
       # ensure that it has all the columns specified in the query config
@@ -33,6 +32,10 @@ defmodule Table do
 
       # Utils.log("proc_query_config", proc_query_config, is_list(query_config))
       gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
+      schema = Map.put(context["schema"], plural_table_name, gen_columns_sql["table_schema"])
+      context = %{context | "schema" => schema}
+      # nyd: also you can get errors back from gen_columns_sql["errors"]
+
       # Utils.log("gen_columns_sql", gen_columns_sql, is_list(query_config))
       gen_sql_cols(context, plural_table_name, gen_columns_sql)
     end
@@ -84,6 +87,7 @@ defmodule Table do
             sql_acc = String.trim(acc["sql"])
             table_schema = acc["table_schema"]
             col_def = Column.define_column(context, column_name_key, column_config)
+            Utils.log("col_def", col_def, column_config == "str 44")
             # update the schema
             schema = Map.put(table_schema, column_name_key, col_def["config"])
             comma = if sql_acc == "", do: "", else: ", "
@@ -248,10 +252,10 @@ defmodule Table do
         Map.put(context["schema"], plural_table_name, generated_columns_sql["table_schema"])
 
       context = %{context | "schema" => schema}
-      {context, sql}
+      {context, sql, false}
     else
       # nothing to do, because there are no new columns
-      {context, ""}
+      {context, "", false}
     end
   end
 

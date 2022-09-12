@@ -141,3 +141,52 @@ query = [
     ]
   in the context of add, if all columns are definitions then it will auto infer "dao@def_only" => true
   there is no need to have that as a flag
+
+
+
+> Quering Interface (DSL), using data structures and flags
+> Generating SQL from Queries
+> Executing queries 
+> Modifiying Context
+> Packaging and Returning response
+
+
+Road Ahead Not in Any Order
+> Documentation
+> Tutorilas
+> Client UI libraries/ Language Libraries
+> Query processing tracing - for debugging while bulding this tool
+> Error handling and reporting
+> Working starting with an existing DB
+> Multitenant
+> Queues and Pipelines
+> Triggers
+> Hooks
+> Migrations
+> Transactions and Rollbacks
+> Prepared Statements
+> Security and Authorization
+> Email
+> SMS
+> Payments
+> Notifications
+> Audit Trails and Logs
+> Hashing
+> SQL Views
+> Encryption
+> Hidden/Invisible Fields
+> Realtime Capabilities
+> If conditions
+> Server side functions
+> Server side rendering
+> Static Variable Pages (Sort of how Next.js, Gatsby, Static Site Generator)
+> Concurrency
+> File uploads/ Downloads
+> Batch processing using excell, scv
+> QR code generations capabilities
+> Image manipulation
+> Plugins
+> Cache State
+> Event Bus/ Queue e.g RabitmQ
+> SUpport for Postgress, MSSQL. Oracle
+

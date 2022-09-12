@@ -88,7 +88,8 @@ defmodule Utils do
       "dao@limit",
       "dao@size",
       "dao@page_size",
-      "dao@pagesize"
+      "dao@pagesize",
+      "dao@fks"
     ]
   end
 end
