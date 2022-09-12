@@ -174,6 +174,8 @@ query = [
 
 
 Road Ahead Not in Any Order
+> Nested structs - joins and children
+> nested queries
 > making named queried optional/ one can opt out of using named queries (distant near future)
 > Using resulta of a previous query and embedding them in a new query or referencung them
 > Documentation
