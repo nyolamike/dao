@@ -217,3 +217,16 @@ Road Ahead Not in Any Order
 > SUpport for Postgress, MSSQL. Oracle
 > Refs for optimissation to avoid unecessary repeation when returning data.  but this is a seeting 
 
+#nyd supporting this OUTPUT clause when adding multiple rows in one query
+INSERT INTO 
+	sales.promotions ( 
+		promotion_name, discount, start_date, expired_date
+	)
+OUTPUT inserted.promotion_id
+VALUES
+	('2020 Summer Promotion',0.25,'20200601','20200901'),
+	('2020 Fall Promotion',0.10,'20201001','20201101'),
+	('2020 Winter Promotion', 0.25,'20201201','20210101');
+
+
+Fixtures means the schedule/que of sql statments or commands to be executed

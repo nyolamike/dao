@@ -661,8 +661,8 @@ defmodule Column do
   def list_to_query_config(context, plural_table_name, query_config) do
     # for example in insert queries
     item_to_scan = hd(query_config)
-    item_to_scan = if is_list(item_to_scan), do: hd(item_to_scan), else: query_config
-    # Utils.log("query_config", item_to_scan)
+    item_to_scan = if is_list(item_to_scan), do: item_to_scan, else: query_config
+    # Utils.log("query_config", item_to_scan, is_list(item_to_scan))
     # Utils.log("schema", context["schema"][plural_table_name])
     # we need to match the entries of the array with table columns
     acc = %{
@@ -708,8 +708,10 @@ defmodule Column do
     cols_from_array.cols
   end
 
+  def sql_value_format(nil), do: "NULL"
   def sql_value_format(value) when is_binary(value), do: "'#{value}'"
   def sql_value_format(value) when is_map(value), do: "hi"
+
   def sql_value_format(value), do: "#{value}"
 
   def sql_column_name(context, table_name, column_name) do
