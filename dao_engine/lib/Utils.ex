@@ -84,12 +84,27 @@ defmodule Utils do
       "dao@order_by",
       "dao@order_by_ascending",
       "dao@order_by_descending",
+      "dao@order_by_desc",
       "dao@descend",
       "dao@limit",
+      "dao@take",
       "dao@size",
       "dao@page_size",
       "dao@pagesize",
-      "dao@fks"
+      "dao@fks",
+      "dao@group_by"
+    ] ++ col_flags()
+  end
+
+  def col_flags() do
+    [
+      "dao@unique",
+      "dao@distinct",
+      "dao@count",
+      "dao@average",
+      "dao@avg",
+      "dao@sum",
+      "dao@total"
     ]
   end
 end

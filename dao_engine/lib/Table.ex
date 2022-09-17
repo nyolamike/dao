@@ -399,18 +399,27 @@ defmodule Table do
       else
         Enum.reduce(config_table_def, query_config, fn {node_key, node_value}, acc_query_config ->
           skip = Utils.skip_keys()
+          col_flags = Utils.col_flags()
 
-          if node_key in skip do
-            acc_query_config
-          else
-            columns = Map.put(acc_query_config["columns"], node_key, node_value)
-            %{acc_query_config | "columns" => columns}
+          cond do
+            node_key in skip && node_key in col_flags == false ->
+              acc_query_config
+
+            node_key in skip == false || (node_key in skip && node_key in col_flags == true) ->
+              columns = Map.put(acc_query_config["columns"], node_key, node_value)
+              %{acc_query_config | "columns" => columns}
+
+            true ->
+              acc_query_config
           end
         end)
       end
 
     {context, preprocess_config_table_def} =
       OrderBy.preprocess_config(context, preprocess_config_table_def, config_table_def)
+
+    {context, preprocess_config_table_def} =
+      GroupBy.preprocess_config(context, preprocess_config_table_def, config_table_def)
 
     {context, preprocess_config_table_def} =
       Pagination.preprocess_config(context, preprocess_config_table_def, config_table_def)

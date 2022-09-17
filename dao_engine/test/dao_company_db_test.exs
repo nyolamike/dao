@@ -25,7 +25,6 @@ defmodule DaoCompanyDbTest do
             "last_name" => "str 40",
             "birth_day" => "date",
             "sex" => "str 1",
-            "sex" => "int",
             "super_id" => "int",
             "branch_id" => "int"
           }
@@ -39,7 +38,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex INT(30), super_id INT(30))"
+          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))"
         ],
         "database_name" => "company_db",
         "database_type" => "mysql",
@@ -98,9 +97,9 @@ defmodule DaoCompanyDbTest do
               "default" => "",
               "is_primary_key" => false,
               "required" => false,
-              "size" => 30,
-              "sql" => "INT(30)",
-              "type" => "integer",
+              "size" => 1,
+              "sql" => "VARCHAR(1)",
+              "type" => "string",
               "unique" => false
             },
             "super_id" => %{
@@ -1833,7 +1832,6 @@ defmodule DaoCompanyDbTest do
             "last_name" => "str 40",
             "birth_day" => "date",
             "sex" => "str 1",
-            "sex" => "int",
             "super_id" => "int",
             "branch_id" => "int"
           }
@@ -1912,7 +1910,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex INT(30), super_id INT(30))",
+          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))",
           "CREATE TABLE `company_db.branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
           "dao@skip: ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL",
           "CREATE TABLE `company_db.clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
@@ -2093,9 +2091,9 @@ defmodule DaoCompanyDbTest do
               "default" => "",
               "is_primary_key" => false,
               "required" => false,
-              "size" => 30,
-              "sql" => "INT(30)",
-              "type" => "integer",
+              "size" => 1,
+              "sql" => "VARCHAR(1)",
+              "type" => "string",
               "unique" => false
             },
             "super_id" => %{

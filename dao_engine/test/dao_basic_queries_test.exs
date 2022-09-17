@@ -142,7 +142,8 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "SELECT name, gpa FROM `grocerify.students` WHERE is_deleted = 0"
+              "sql" =>
+                "SELECT `grocerify.students.name`, `grocerify.students.gpa` FROM `grocerify.students` WHERE is_deleted = 0"
             }
           ]
         ]

@@ -57,6 +57,13 @@ defmodule OrderBy do
             config_table_def["dao@order_by_descending"]
           )
 
+        Map.has_key?(config_table_def, "dao@order_by_desc") ->
+          Map.put(
+            preprocess_config_table_def,
+            "order_by_descending",
+            config_table_def["dao@order_by_desc"]
+          )
+
         Map.has_key?(config_table_def, "dao@order_desc") ->
           Map.put(
             preprocess_config_table_def,

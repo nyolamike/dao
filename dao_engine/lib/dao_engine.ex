@@ -306,24 +306,95 @@ defmodule DaoEngine do
                     sql_acc
                   else
                     comma = if sql_acc == "", do: "", else: ", "
-                    "#{sql_acc}#{comma}#{key}"
+                    column_name = Column.sql_column_name(context, str_node_name_key, key)
+                    "#{sql_acc}#{comma}#{column_name}"
                   end
                 end)
 
               is_map(query_config) ->
                 processed_query_config = Table.preprocess_query_config(context, query_config)
 
-                Enum.reduce(processed_query_config["columns"], "", fn {key,
-                                                                       _cast_data_type_or_formating_flags},
+                Enum.reduce(processed_query_config["columns"], "", fn {key, format_config},
                                                                       sql_acc ->
                   skip = Utils.skip_keys()
+                  col_flags = Utils.col_flags()
 
-                  if key in skip do
-                    sql_acc
-                  else
-                    comma = if sql_acc == "", do: "", else: ", "
-                    column_name = Column.sql_column_name(context, str_node_name_key, key)
-                    "#{sql_acc}#{comma}#{column_name}"
+                  cond do
+                    key in skip && key in col_flags == false ->
+                      sql_acc
+
+                    key in skip && key in col_flags == true ->
+                      # processable column flag
+                      cond do
+                        key in ["dao@unique", "dao@distinct"] ->
+                          distinct_sql =
+                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                              comma = if acc_uniq == "", do: "", else: ", "
+
+                              column_name =
+                                Column.sql_column_name(context, str_node_name_key, column_name)
+
+                              "#{acc_uniq}#{comma}#{column_name}"
+                            end)
+
+                          "DISTINCT #{distinct_sql}"
+
+                        key in ["dao@count"] ->
+                          distinct_sql =
+                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                              comma = if acc_uniq == "", do: "", else: ", "
+
+                              column_name =
+                                Column.sql_column_name(context, str_node_name_key, column_name)
+
+                              "#{acc_uniq}#{comma}#{column_name}"
+                            end)
+
+                          "COUNT(#{distinct_sql})"
+
+                        key in ["dao@average", "dao@avg"] ->
+                          distinct_sql =
+                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                              comma = if acc_uniq == "", do: "", else: ", "
+
+                              column_name =
+                                Column.sql_column_name(context, str_node_name_key, column_name)
+
+                              "#{acc_uniq}#{comma}#{column_name}"
+                            end)
+
+                          "AVG(#{distinct_sql})"
+
+                        key in ["dao@total", "dao@sum"] ->
+                          distinct_sql =
+                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                              comma = if acc_uniq == "", do: "", else: ", "
+
+                              column_name =
+                                Column.sql_column_name(context, str_node_name_key, column_name)
+
+                              "#{acc_uniq}#{comma}#{column_name}"
+                            end)
+
+                          "SUM(#{distinct_sql})"
+
+                        true ->
+                          # nyd: take care of other scenarios
+                          sql_acc
+                      end
+
+                    true ->
+                      comma = if sql_acc == "", do: "", else: ", "
+                      column_name = Column.sql_column_name(context, str_node_name_key, key)
+
+                      column_name =
+                        if is_map(format_config) && Map.has_key?(format_config, "as") do
+                          "#{column_name} AS #{format_config["as"]}"
+                        else
+                          column_name
+                        end
+
+                      "#{sql_acc}#{comma}#{column_name}"
                   end
                 end)
             end
@@ -347,9 +418,10 @@ defmodule DaoEngine do
             end
 
           order_by_sql = OrderBy.gen_sql(context, query_config)
+          group_by_sql = GroupBy.gen_sql(context, query_config)
           pagination_sql = Pagination.gen_sql(context, query_config)
 
-          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{pagination_sql}"
+          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{group_by_sql}#{pagination_sql}"
         end
 
       cond do
@@ -372,7 +444,11 @@ defmodule DaoEngine do
             end)
 
           context = %{context | "auto_schema_changes" => auto_schema_changes}
-          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+          %{
+            "context" => context,
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+          }
 
         insert_sql == "" && any_alter_table_sql != "" ->
           # there is no data to be updated, but we have some schema changes
@@ -382,7 +458,10 @@ defmodule DaoEngine do
             "is_list" => is_list
           }
 
-          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+          %{
+            "context" => context,
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+          }
 
         insert_sql == "" && any_alter_table_sql == "" ->
           fixture_config = %{
@@ -390,7 +469,10 @@ defmodule DaoEngine do
             "is_list" => is_list
           }
 
-          %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+          %{
+            "context" => context,
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+          }
       end
     end)
   end
@@ -546,7 +628,11 @@ defmodule DaoEngine do
           end)
 
         context = %{context | "auto_schema_changes" => auto_schema_changes}
-        %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+
+        %{
+          "context" => context,
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
 
       update_sql == "" && any_alter_table_sql != "" ->
         # there is no data to be updated, but we have some schema changes
@@ -564,7 +650,10 @@ defmodule DaoEngine do
           "is_list" => is_list
         }
 
-        %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
+        %{
+          "context" => context,
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
     end
   end
 
@@ -603,7 +692,10 @@ defmodule DaoEngine do
             "is_list" => true
           }
 
-          %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+          %{
+            "context" => new_context,
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+          }
 
         is_list(query_config) == false && is_tuple(query_config) == false &&
           is_map(query_config) == false &&
@@ -621,7 +713,7 @@ defmodule DaoEngine do
 
           %{
             "context" => result_acc["context"],
-            "fixture_list" => [{node_name_key, fixture_config}]
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
           }
 
         is_map(query_config) == true || is_tuple(query_config) ->
@@ -655,7 +747,7 @@ defmodule DaoEngine do
 
           %{
             "context" => result_acc["context"],
-            "fixture_list" => [{node_name_key, fixture_config}]
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
           }
 
         is_list(query_config) == true ->
@@ -669,7 +761,10 @@ defmodule DaoEngine do
             "is_list" => true
           }
 
-          %{"context" => new_context, "fixture_list" => [{node_name_key, fixture_config}]}
+          %{
+            "context" => new_context,
+            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+          }
 
         true ->
           throw("Unknown delete query config on #{node_name_key}")
@@ -701,6 +796,13 @@ defmodule DaoEngine do
     end)
   end
 
+  @spec load_config_from_file(
+          binary
+          | maybe_improper_list(
+              binary | maybe_improper_list(any, binary | []) | char,
+              binary | []
+            )
+        ) :: {:ok, map} | {:error, <<_::64, _::_*8>>, atom | Jason.DecodeError.t()}
   def load_config_from_file(project_path_slug) do
     base_path = get_env("BASE_ROOT_FILE_PATH")
     path = Path.join([base_path, project_path_slug, "dao.json"])
