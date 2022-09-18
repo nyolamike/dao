@@ -764,4 +764,27 @@ defmodule Column do
       }
     end
   end
+
+  def is_data_type(term) do
+    data_types = [
+      "fk",
+      "pk",
+      "integer",
+      "int",
+      "bool",
+      "boolean",
+      "str",
+      "string",
+      "timestamp",
+      "date",
+      "datetime",
+      "float",
+      "decimal",
+      "blob",
+      "txt",
+      "text"
+    ]
+
+    term in data_types
+  end
 end

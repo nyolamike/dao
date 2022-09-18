@@ -268,213 +268,256 @@ defmodule DaoEngine do
     }
 
     Enum.reduce(fixtures_kwl_node, result, fn {node_name_key, query_config}, result_acc ->
-      str_node_name_key = Atom.to_string(node_name_key)
-      is_list = Utils.is_word_plural?(query_config, str_node_name_key)
-      # check if the table exists in the schema
-      ensure_table_response =
-        Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
+      if node_name_key == :dao@combine do
+        init_comb_acc = %{
+          "context" => result_acc["context"],
+          "fixture_list" => []
+        }
 
-      # {context, any_alter_table_sql} =
-      #   case ensure_table_response do
-      #     {context, sql} -> {context, sql}
-      #     context -> {context, ""}
-      #   end
+        unions_temp =
+          Enum.reduce(query_config, init_comb_acc, fn {comb_node_name_key, comb_query_config},
+                                                      comb_acc ->
+            temp_res =
+              gen_sql_for_get_fixture_helper(result_acc, comb_node_name_key, comb_query_config)
 
-      {context, any_alter_table_sql, is_def_only} =
-        case ensure_table_response do
-          {context, sql} -> {context, sql, true}
-          {context, sql, is_def_only} -> {context, sql, is_def_only}
-          context -> {context, "", true}
-        end
+            sql_map = Keyword.get(temp_res["fixture_list"], comb_node_name_key)
+            sql_to_combine = sql_map["sql"]
 
-      insert_sql =
-        if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
-             Map.get(query_config, "dao@def_only") == true do
-          # no select sql will be generated
-          ""
-        else
-          sql = "SELECT"
+            %{
+              "context" => temp_res["context"],
+              "fixture_list" => comb_acc["fixture_list"] ++ [sql_to_combine]
+            }
+          end)
 
-          specififc_cols_sql =
-            cond do
-              is_list(query_config) ->
-                # nyd: we expect that someone just provided a list of specific columns to be fecthed
-                Enum.reduce(query_config, "", fn key, sql_acc ->
-                  skip = Utils.skip_keys()
+        union_sql = Enum.join(unions_temp["fixture_list"], " UNION ")
 
-                  if key in skip do
-                    sql_acc
-                  else
-                    comma = if sql_acc == "", do: "", else: ", "
-                    column_name = Column.sql_column_name(context, str_node_name_key, key)
-                    "#{sql_acc}#{comma}#{column_name}"
-                  end
-                end)
+        fixture_config = %{
+          "sql" => union_sql,
+          "is_list" => true
+        }
 
-              is_map(query_config) ->
-                processed_query_config = Table.preprocess_query_config(context, query_config)
-
-                Enum.reduce(processed_query_config["columns"], "", fn {key, format_config},
-                                                                      sql_acc ->
-                  skip = Utils.skip_keys()
-                  col_flags = Utils.col_flags()
-
-                  cond do
-                    key in skip && key in col_flags == false ->
-                      sql_acc
-
-                    key in skip && key in col_flags == true ->
-                      # processable column flag
-                      cond do
-                        key in ["dao@unique", "dao@distinct"] ->
-                          distinct_sql =
-                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
-                              comma = if acc_uniq == "", do: "", else: ", "
-
-                              column_name =
-                                Column.sql_column_name(context, str_node_name_key, column_name)
-
-                              "#{acc_uniq}#{comma}#{column_name}"
-                            end)
-
-                          "DISTINCT #{distinct_sql}"
-
-                        key in ["dao@count"] ->
-                          distinct_sql =
-                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
-                              comma = if acc_uniq == "", do: "", else: ", "
-
-                              column_name =
-                                Column.sql_column_name(context, str_node_name_key, column_name)
-
-                              "#{acc_uniq}#{comma}#{column_name}"
-                            end)
-
-                          "COUNT(#{distinct_sql})"
-
-                        key in ["dao@average", "dao@avg"] ->
-                          distinct_sql =
-                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
-                              comma = if acc_uniq == "", do: "", else: ", "
-
-                              column_name =
-                                Column.sql_column_name(context, str_node_name_key, column_name)
-
-                              "#{acc_uniq}#{comma}#{column_name}"
-                            end)
-
-                          "AVG(#{distinct_sql})"
-
-                        key in ["dao@total", "dao@sum"] ->
-                          distinct_sql =
-                            Enum.reduce(format_config, "", fn column_name, acc_uniq ->
-                              comma = if acc_uniq == "", do: "", else: ", "
-
-                              column_name =
-                                Column.sql_column_name(context, str_node_name_key, column_name)
-
-                              "#{acc_uniq}#{comma}#{column_name}"
-                            end)
-
-                          "SUM(#{distinct_sql})"
-
-                        true ->
-                          # nyd: take care of other scenarios
-                          sql_acc
-                      end
-
-                    true ->
-                      comma = if sql_acc == "", do: "", else: ", "
-                      column_name = Column.sql_column_name(context, str_node_name_key, key)
-
-                      column_name =
-                        if is_map(format_config) && Map.has_key?(format_config, "as") do
-                          "#{column_name} AS #{format_config["as"]}"
-                        else
-                          column_name
-                        end
-
-                      "#{sql_acc}#{comma}#{column_name}"
-                  end
-                end)
-            end
-
-          specififc_cols_sql =
-            if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
-
-          where_sql =
-            if is_map(query_config) do
-              where_clause_config = Map.get(query_config, "dao@where")
-
-              where_sql =
-                Operator.process_where_clause(context, query_config, where_clause_config)
-
-              where_sql = String.trim(where_sql)
-              # this applies only if timestamps have not been turned off in the schema
-              and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
-              " WHERE #{and_condition}is_deleted = 0"
-            else
-              " WHERE is_deleted = 0"
-            end
-
-          order_by_sql = OrderBy.gen_sql(context, query_config)
-          group_by_sql = GroupBy.gen_sql(context, query_config)
-          pagination_sql = Pagination.gen_sql(context, query_config)
-
-          "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{group_by_sql}#{pagination_sql}"
-        end
-
-      cond do
-        insert_sql != "" ->
-          # we have some data to update
-          sql = insert_sql
-          # nyd: the auto commented out alter cmd needs to be re-enable
-          # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
-
-          fixture_config = %{
-            "sql" => sql,
-            "is_list" => is_list
-          }
-
-          auto_schema_changes =
-            Enum.reduce(context["auto_schema_changes"], [], fn item, acc ->
-              look_for = "dao@skip: " <> any_alter_table_sql
-              temp_sql = if look_for == item, do: any_alter_table_sql, else: item
-              acc ++ [temp_sql]
-            end)
-
-          context = %{context | "auto_schema_changes" => auto_schema_changes}
-
-          %{
-            "context" => context,
-            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
-          }
-
-        insert_sql == "" && any_alter_table_sql != "" ->
-          # there is no data to be updated, but we have some schema changes
-          # then these are gona be fixture because they are the only queries in the root command
-          fixture_config = %{
-            "sql" => any_alter_table_sql,
-            "is_list" => is_list
-          }
-
-          %{
-            "context" => context,
-            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
-          }
-
-        insert_sql == "" && any_alter_table_sql == "" ->
-          fixture_config = %{
-            "sql" => "",
-            "is_list" => is_list
-          }
-
-          %{
-            "context" => context,
-            "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
-          }
+        %{
+          "context" => unions_temp["context"],
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
+      else
+        gen_sql_for_get_fixture_helper(result_acc, node_name_key, query_config)
       end
     end)
+  end
+
+  def gen_sql_for_get_fixture_helper(result_acc, node_name_key, query_config) do
+    str_node_name_key = Atom.to_string(node_name_key)
+    is_list = Utils.is_word_plural?(query_config, str_node_name_key)
+    # check if the table exists in the schema
+    ensure_table_response =
+      Table.gen_sql_ensure_table_exists(result_acc["context"], str_node_name_key, query_config)
+
+    # {context, any_alter_table_sql} =
+    #   case ensure_table_response do
+    #     {context, sql} -> {context, sql}
+    #     context -> {context, ""}
+    #   end
+
+    {context, any_alter_table_sql, is_def_only} =
+      case ensure_table_response do
+        {context, sql} -> {context, sql, true}
+        {context, sql, is_def_only} -> {context, sql, is_def_only}
+        context -> {context, "", true}
+      end
+
+    insert_sql =
+      if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
+           Map.get(query_config, "dao@def_only") == true do
+        # no select sql will be generated
+        ""
+      else
+        sql = "SELECT"
+
+        specififc_cols_sql =
+          cond do
+            is_list(query_config) ->
+              # nyd: we expect that someone just provided a list of specific columns to be fecthed
+              Enum.reduce(query_config, "", fn key, sql_acc ->
+                skip = Utils.skip_keys()
+
+                if key in skip do
+                  sql_acc
+                else
+                  comma = if sql_acc == "", do: "", else: ", "
+                  column_name = Column.sql_column_name(context, str_node_name_key, key)
+                  "#{sql_acc}#{comma}#{column_name}"
+                end
+              end)
+
+            is_map(query_config) ->
+              processed_query_config = Table.preprocess_query_config(context, query_config)
+
+              Enum.reduce(processed_query_config["columns"], "", fn {key, format_config},
+                                                                    sql_acc ->
+                skip = Utils.skip_keys()
+                col_flags = Utils.col_flags()
+
+                cond do
+                  key in skip && key in col_flags == false ->
+                    sql_acc
+
+                  key in skip && key in col_flags == true ->
+                    # processable column flag
+                    cond do
+                      key in ["dao@unique", "dao@distinct"] ->
+                        distinct_sql =
+                          Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                            comma = if acc_uniq == "", do: "", else: ", "
+
+                            column_name =
+                              Column.sql_column_name(context, str_node_name_key, column_name)
+
+                            "#{acc_uniq}#{comma}#{column_name}"
+                          end)
+
+                        "DISTINCT #{distinct_sql}"
+
+                      key in ["dao@count"] ->
+                        distinct_sql =
+                          Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                            comma = if acc_uniq == "", do: "", else: ", "
+
+                            column_name =
+                              Column.sql_column_name(context, str_node_name_key, column_name)
+
+                            "#{acc_uniq}#{comma}#{column_name}"
+                          end)
+
+                        "COUNT(#{distinct_sql})"
+
+                      key in ["dao@average", "dao@avg"] ->
+                        distinct_sql =
+                          Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                            comma = if acc_uniq == "", do: "", else: ", "
+
+                            column_name =
+                              Column.sql_column_name(context, str_node_name_key, column_name)
+
+                            "#{acc_uniq}#{comma}#{column_name}"
+                          end)
+
+                        "AVG(#{distinct_sql})"
+
+                      key in ["dao@total", "dao@sum"] ->
+                        distinct_sql =
+                          Enum.reduce(format_config, "", fn column_name, acc_uniq ->
+                            comma = if acc_uniq == "", do: "", else: ", "
+
+                            column_name =
+                              Column.sql_column_name(context, str_node_name_key, column_name)
+
+                            "#{acc_uniq}#{comma}#{column_name}"
+                          end)
+
+                        "SUM(#{distinct_sql})"
+
+                      true ->
+                        # nyd: take care of other scenarios
+                        sql_acc
+                    end
+
+                  true ->
+                    comma = if sql_acc == "", do: "", else: ", "
+                    column_name = Column.sql_column_name(context, str_node_name_key, key)
+
+                    column_name =
+                      cond do
+                        is_map(format_config) && Map.has_key?(format_config, "as") ->
+                          "#{column_name} AS #{format_config["as"]}"
+
+                        is_binary(format_config) && Column.is_data_type(format_config) == false ->
+                          # nyd: this will be used as the as shorthand for now
+                          "#{column_name} AS #{format_config}"
+
+                        true ->
+                          column_name
+                      end
+
+                    "#{sql_acc}#{comma}#{column_name}"
+                end
+              end)
+          end
+
+        specififc_cols_sql =
+          if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
+
+        where_sql =
+          if is_map(query_config) do
+            where_clause_config = Map.get(query_config, "dao@where")
+
+            where_sql = Operator.process_where_clause(context, query_config, where_clause_config)
+
+            where_sql = String.trim(where_sql)
+            # this applies only if timestamps have not been turned off in the schema
+            and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+            " WHERE #{and_condition}is_deleted = 0"
+          else
+            " WHERE is_deleted = 0"
+          end
+
+        order_by_sql = OrderBy.gen_sql(context, query_config)
+        group_by_sql = GroupBy.gen_sql(context, query_config)
+        pagination_sql = Pagination.gen_sql(context, query_config)
+
+        "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{group_by_sql}#{pagination_sql}"
+      end
+
+    cond do
+      insert_sql != "" ->
+        # we have some data to update
+        sql = insert_sql
+        # nyd: the auto commented out alter cmd needs to be re-enable
+        # as in remove 'dao@skip: ' part from "dao@skip: ALTER TABLE ... "
+
+        fixture_config = %{
+          "sql" => sql,
+          "is_list" => is_list
+        }
+
+        auto_schema_changes =
+          Enum.reduce(context["auto_schema_changes"], [], fn item, acc ->
+            look_for = "dao@skip: " <> any_alter_table_sql
+            temp_sql = if look_for == item, do: any_alter_table_sql, else: item
+            acc ++ [temp_sql]
+          end)
+
+        context = %{context | "auto_schema_changes" => auto_schema_changes}
+
+        %{
+          "context" => context,
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
+
+      insert_sql == "" && any_alter_table_sql != "" ->
+        # there is no data to be updated, but we have some schema changes
+        # then these are gona be fixture because they are the only queries in the root command
+        fixture_config = %{
+          "sql" => any_alter_table_sql,
+          "is_list" => is_list
+        }
+
+        %{
+          "context" => context,
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
+
+      insert_sql == "" && any_alter_table_sql == "" ->
+        fixture_config = %{
+          "sql" => "",
+          "is_list" => is_list
+        }
+
+        %{
+          "context" => context,
+          "fixture_list" => [{node_name_key, fixture_config} | result_acc["fixture_list"]]
+        }
+    end
   end
 
   def gen_sql_for_update(context, query_object, input_kwl_node) do

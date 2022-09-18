@@ -133,6 +133,7 @@ defmodule Operator do
   def process_where_clause(context, query_config, {left, operator, right}) do
     operator_sql = Operator.parse(operator)
     preped_operator_sql = Operator.get_possible_operator(context, operator_sql)
+
     cond do
       is_tuple(left) == false && is_tuple(right) == false ->
         left_side = left

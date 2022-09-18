@@ -1,21 +1,23 @@
-defmodule DaoWildCardsTest do
+defmodule DaoUnionQueriesTest do
   use ExUnit.Case
 
   alias DaoEngine, as: Dao
 
-  test "1. Find clients who are LLC 2:45:13 / 4:20:38 More Basic Queries " do
+  test "1. Find a list of employee and branch names 2:54:30 / 4:20:38 Union Queries " do
     context = get_company_context()
 
     query = [
       get: [
-        llc_clients: [
-          clients: %{
-            "dao@where" => {
-              "client_name",
-              "ends with",
-              "LLC"
-            }
-          }
+        names_in_our_db: [
+          dao@combine: [
+            employee: %{
+              "first_name" => %{
+                "as" => "Company_Names"
+              }
+            },
+            branch: ["branch_name"],
+            client: ["client_name"]
+          ]
         ]
       ]
     ]
@@ -25,11 +27,11 @@ defmodule DaoWildCardsTest do
 
     expected_cmd_results = [
       get: [
-        llc_clients: [
-          clients: %{
+        names_in_our_db: [
+          dao@combine: %{
             "is_list" => true,
             "sql" =>
-              "SELECT * FROM `company_db.clients` WHERE (client_name LIKE '%LLC') AND is_deleted = 0"
+              "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE is_deleted = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE is_deleted = 0"
           }
         ]
       ]
@@ -39,19 +41,19 @@ defmodule DaoWildCardsTest do
     assert expected_cmd_results == cmd_results
   end
 
-  test "2. Find any branch suppliers who are in the label business 2:48:47 / 4:20:38 More Basic Queries " do
+  test "2. Find a list of all clients and branch suppliers' names 2:58:17 / 4:20:38 Union Queries " do
     context = get_company_context()
 
     query = [
       get: [
-        label_suppliers: [
-          branch_supplier: %{
-            "dao@where" => {
-              "supplier_name",
-              "contains",
-              " Label"
-            }
-          }
+        names_in_our_db: [
+          dao@combine: [
+            client: %{
+              "client_name" => true,
+              "branch_id" => true
+            },
+            branch_supplier: ["supplier_name", "branch_id"]
+          ]
         ]
       ]
     ]
@@ -61,11 +63,11 @@ defmodule DaoWildCardsTest do
 
     expected_cmd_results = [
       get: [
-        label_suppliers: [
-          branch_supplier: %{
-            "is_list" => false,
+        names_in_our_db: [
+          dao@combine: %{
+            "is_list" => true,
             "sql" =>
-              "SELECT * FROM `company_db.branch_suppliers` WHERE (supplier_name LIKE '% Label%') AND is_deleted = 0"
+              "SELECT `company_db.clients.branch_id`, `company_db.clients.client_name` FROM `company_db.clients` WHERE is_deleted = 0 UNION SELECT `company_db.branch_suppliers.supplier_name`, `company_db.branch_suppliers.branch_id` FROM `company_db.branch_suppliers` WHERE is_deleted = 0"
           }
         ]
       ]
@@ -75,19 +77,16 @@ defmodule DaoWildCardsTest do
     assert expected_cmd_results == cmd_results
   end
 
-  test "3. Find any employee born in october 2:50:39 / 4:20:38 More Basic Queries " do
+  test "3. Find a list of all money spent or earned by the company 3:00:38 / 4:20:38 Union Queries " do
     context = get_company_context()
 
     query = [
       get: [
-        oct_babies: [
-          employee: %{
-            "dao@where" => {
-              "birth_date",
-              "matches",
-              "____-10%"
-            }
-          }
+        all_money: [
+          dao@combine: [
+            employee: ["salary"],
+            works_with: ["total_sales"]
+          ]
         ]
       ]
     ]
@@ -97,47 +96,10 @@ defmodule DaoWildCardsTest do
 
     expected_cmd_results = [
       get: [
-        oct_babies: [
-          employee: %{
-            "is_list" => false,
-            "sql" =>
-              "SELECT * FROM `company_db.employees` WHERE (birth_date LIKE '____-10%') AND is_deleted = 0"
-          }
-        ]
-      ]
-    ]
-
-    assert context == results_context
-    assert expected_cmd_results == cmd_results
-  end
-
-  test "4. Find any clients who are a school 2:52:37 / 4:20:38 More Basic Queries " do
-    context = get_company_context()
-
-    query = [
-      get: [
-        school_clients: [
-          client: %{
-            "dao@where" => {
-              "client_name",
-              "has",
-              "school"
-            }
-          }
-        ]
-      ]
-    ]
-
-    results = Dao.execute(context, query)
-    %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
-
-    expected_cmd_results = [
-      get: [
-        school_clients: [
-          client: %{
-            "is_list" => false,
-            "sql" =>
-              "SELECT * FROM `company_db.clients` WHERE (client_name LIKE '%school%') AND is_deleted = 0"
+        all_money: [
+          dao@combine: %{
+            "is_list" => true,
+            "sql" => "SELECT `company_db.employees.salary` FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.works_withs.total_sales` FROM `company_db.works_withs` WHERE is_deleted = 0"
           }
         ]
       ]

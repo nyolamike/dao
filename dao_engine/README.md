@@ -230,3 +230,5 @@ VALUES
 
 
 Fixtures means the schedule/que of sql statments or commands to be executed
+
+nyd: implement rules for union clause, like same number of cols, and similer data types
