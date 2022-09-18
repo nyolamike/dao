@@ -110,6 +110,14 @@ defmodule Operator do
       "in" -> "IN"
       "is in" -> "IN"
       "IN" -> "IN"
+      "ends with" -> "%LIKE"
+      "ends_with" -> "%LIKE"
+      "starts with" -> "LIKE%"
+      "starts_with" -> "LIKE%"
+      "contains" -> "%LIKE%"
+      "has" -> "%LIKE%"
+      "like" -> "LIKE"
+      "matches" -> "LIKE"
     end
   end
 
@@ -124,26 +132,26 @@ defmodule Operator do
 
   def process_where_clause(context, query_config, {left, operator, right}) do
     operator_sql = Operator.parse(operator)
-
+    preped_operator_sql = Operator.get_possible_operator(context, operator_sql)
     cond do
       is_tuple(left) == false && is_tuple(right) == false ->
         left_side = left
         possible_value = get_possible_value(context, operator_sql, right)
-        "#{left_side} #{operator_sql} #{possible_value}"
+        "#{left_side} #{preped_operator_sql} #{possible_value}"
 
       is_tuple(left) == false && is_tuple(right) == true ->
         right_side = process_where_clause(context, query_config, right)
-        "(#{left}) #{operator_sql} #{right_side}"
+        "(#{left}) #{preped_operator_sql} #{right_side}"
 
       is_tuple(left) == true && is_tuple(right) == false ->
         left_side = process_where_clause(context, query_config, right)
         possible_value = Column.sql_value_format(right)
-        "#{left_side} #{operator_sql} (#{possible_value})"
+        "#{left_side} #{preped_operator_sql} (#{possible_value})"
 
       is_tuple(left) == true && is_tuple(right) == true ->
         left_side = process_where_clause(context, query_config, left)
         right_side = process_where_clause(context, query_config, right)
-        "(#{left_side}) #{operator_sql} (#{right_side})"
+        "(#{left_side}) #{preped_operator_sql} (#{right_side})"
     end
   end
 
@@ -176,8 +184,22 @@ defmodule Operator do
             end
         end
 
+      "%LIKE" ->
+        "'%#{right}'"
+
+      "LIKE%" ->
+        "'#{right}%'"
+
+      "%LIKE%" ->
+        "'%#{right}%'"
+
       _ ->
         Column.sql_value_format(right)
     end
+  end
+
+  def get_possible_operator(context, operator_sql) do
+    likes = ["%LIKE", "LIKE%", "LIKE", "%LIKE%"]
+    if operator_sql in likes, do: "LIKE", else: operator_sql
   end
 end

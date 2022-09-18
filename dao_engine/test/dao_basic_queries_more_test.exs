@@ -571,6 +571,7 @@ defmodule DaoBasicQueriesMoreTest do
     assert expected_cmd_results == cmd_results
   end
 
+
   defp get_company_context() do
     %{
       "auto_alter_db" => true,
