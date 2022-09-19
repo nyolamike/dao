@@ -30,7 +30,15 @@ defmodule Table do
             throw("Unknown query config: ensuring all columns exist")
         end
 
-      # Utils.log("proc_query_config", proc_query_config, is_list(query_config))
+      scan = %{
+        "emp_id" => "int",
+        "first_name" => "string",
+        branch: %{
+          "branch_name" => "str",
+          # "dao@link" => {"emp_id","mgr_id"}
+        }
+      }
+      Utils.log("proc_query_config", proc_query_config, query_config == scan)
       gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
       schema = Map.put(context["schema"], plural_table_name, gen_columns_sql["table_schema"])
       context = %{context | "schema" => schema}

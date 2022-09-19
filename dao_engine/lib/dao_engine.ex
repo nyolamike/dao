@@ -423,6 +423,11 @@ defmodule DaoEngine do
                     end
 
                   true ->
+                    #check for parent tables and joins
+                    if key == :branch do
+                      IO.inspect(format_config)
+                    end
+
                     comma = if sql_acc == "", do: "", else: ", "
                     column_name = Column.sql_column_name(context, str_node_name_key, key)
 

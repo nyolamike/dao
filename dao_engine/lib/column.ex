@@ -548,6 +548,21 @@ defmodule Column do
               table_schema = acc["table_schema"]
 
               if Map.has_key?(table_schema, column_name_key) == false do
+                #we need to detect for foreign key situations
+                if is_propbably_ajoin_term(column_config) do
+                  IO.inspect("probably a parent or children list")
+                  IO.inspect(column_config)
+                  IO.inspect(table_schema)
+                  schema_context_to_use = Map.put(context["schema"], plural_table_name, table_schema)
+                  context_to_use = Map.put(context, "schema", schema_context_to_use)
+                  recur_plural_table_name = Inflex.pluralize(column_name_key)
+                  recur_query_config = column_config
+                  recur_results = Table.gen_sql_ensure_table_exists(context_to_use, column_name_key, recur_query_config)
+                  # recur_results = gen_sql_columns(context_to_use, recur_plural_table_name, recur_query_config)
+                  IO.inspect("kapyata")
+                  IO.inspect(recur_results)
+
+                end
                 col_def = define_column(context, column_name_key, column_config)
                 # update the schema
                 schema = Map.put(table_schema, column_name_key, col_def["config"])
@@ -785,6 +800,19 @@ defmodule Column do
       "text"
     ]
 
-    term in data_types
+    cond do
+      is_map(term) && Map.has_key?(term, "type") &&  (term["type"] in data_types)  -> true
+      is_binary(term) && (term in data_types) -> true
+      true -> false
+    end
+  end
+
+  def is_propbably_ajoin_term(term) do
+    is_data_type(term) == false &&
+    (
+      ( is_map(term) || is_list(term) ) ||
+      ( is_map(term) && Map.has_key?(term, "dao@link") ) ||
+      ( is_map(term) && Map.has_key?(term, "dao@join") )
+    )
   end
 end
