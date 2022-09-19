@@ -568,18 +568,34 @@ defmodule Column do
                     #check if there is a foreign key in the child table, if its not there it will be added
                     table_schema = Map.get(recur_context["schema"], plural_table_name)
                     parent_plural_table_name =  Inflex.pluralize(column_name_key)
-                    Enum.reduce(table_schema, "", fn {child_col_nmae, child_col_config}, acc ->
+                    parent_single_table_name =  Inflex.singularize(column_name_key)
+                    is_foreign_key_in_table_schema =
+                      Enum.reduce(table_schema, false, fn {child_col_name, child_col_config}, acc ->
+                        cond do
+                          acc == true -> true
+                          is_map(child_col_config) && Map.has_key?(child_col_config, "fk") && parent_plural_table_name == child_col_config["fk"]  ->
+                            true
+                          is_binary(child_col_config) && child_col_config == "fk" ->
+                            #we infer the parent-child relationship
+                            expected_name = "#{parent_single_table_name}_id"
+                            expected_name == child_col_name
+                          true -> false
+                        end
+                      end)
 
-                      cond do
-                        is_map(child_col_config) && Map.has_key?(child_col_config, "fk") && parent_plural_table_name == child_col_config["fk"]  ->
-                          IO.inspect("Bingo parent fk already configured")
-                        is_binary(child_col_config) && child_col_config == "fk" ->
-                          #we infer the parent-child relationship
-                          IO.inspect("Bingo we are infering the parent-child relationship")
-                          ""
-                        true -> ""
+                    expected_name = "#{parent_single_table_name}_id"
+                    table_schema =
+                      if is_foreign_key_in_table_schema == false do
+                        #nyd: if the child_col_config is a mpa you may want to make some more investigations, like if there is a primary key defined
+                        #if there is no primanry key, them we can use the _id
+                        Map.put(table_schema, expected_name, define(%{
+                          "fk" => parent_single_table_name,
+                          "on" => "id",
+                          "on_delete" => "cascade"
+                        }))
+                      else
+                        table_schema
                       end
-                    end)
 
                     Utils.log("kapyata", table_schema)
 
