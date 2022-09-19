@@ -536,7 +536,8 @@ defmodule Column do
         acc = %{
           "sql" => "",
           "table_schema" => context["schema"][plural_table_name],
-          "errors" => %{}
+          "errors" => %{},
+          "context" => context
         }
 
         Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
@@ -549,32 +550,62 @@ defmodule Column do
 
               if Map.has_key?(table_schema, column_name_key) == false do
                 #we need to detect for foreign key situations
-                if is_propbably_ajoin_term(column_config) do
-                  IO.inspect("probably a parent or children list")
-                  IO.inspect(column_config)
-                  IO.inspect(table_schema)
-                  schema_context_to_use = Map.put(context["schema"], plural_table_name, table_schema)
-                  context_to_use = Map.put(context, "schema", schema_context_to_use)
-                  recur_plural_table_name = Inflex.pluralize(column_name_key)
-                  recur_query_config = column_config
-                  recur_results = Table.gen_sql_ensure_table_exists(context_to_use, column_name_key, recur_query_config)
-                  # recur_results = gen_sql_columns(context_to_use, recur_plural_table_name, recur_query_config)
-                  IO.inspect("kapyata")
-                  IO.inspect(recur_results)
+                {this_context, "", _true} =
+                  if is_propbably_ajoin_term(column_config) do
+                    #the current table_schema is integrated into the context
+                    acc_context = acc["context"]
+                    schema_context_to_use = Map.put(acc_context["schema"], plural_table_name, table_schema)
+                    context_to_use = Map.put(acc_context, "schema", schema_context_to_use)
+                    recur_query_config = column_config
+                    recur_results = Table.gen_sql_ensure_table_exists(context_to_use, column_name_key, recur_query_config)
+                    {recur_context, any_alter_table_sql, is_def_only} =
+                      case recur_results do
+                        {rec_context, alt_sql} -> {rec_context, alt_sql, false}
+                        {rec_context, alt_sql, is_def_only} -> {rec_context, alt_sql, is_def_only}
+                        rec_context -> {rec_context, "", false}
+                      end
 
-                end
+                    #check if there is a foreign key in the child table, if its not there it will be added
+                    table_schema = Map.get(recur_context["schema"], plural_table_name)
+                    parent_plural_table_name =  Inflex.pluralize(column_name_key)
+                    Enum.reduce(table_schema, "", fn {child_col_nmae, child_col_config}, acc ->
+
+                      cond do
+                        is_map(child_col_config) && Map.has_key?(child_col_config, "fk") && parent_plural_table_name == child_col_config["fk"]  ->
+                          IO.inspect("Bingo parent fk already configured")
+                        is_binary(child_col_config) && child_col_config == "fk" ->
+                          #we infer the parent-child relationship
+                          IO.inspect("Bingo we are infering the parent-child relationship")
+                          ""
+                        true -> ""
+                      end
+                    end)
+
+                    Utils.log("kapyata", table_schema)
+
+                    {recur_context, any_alter_table_sql, is_def_only}
+                  else
+                    #the current table_schema is integrated into the context
+                    acc_context = acc["context"]
+                    schema_context_to_use = Map.put(acc_context["schema"], plural_table_name, table_schema)
+                    context_to_use = Map.put(acc_context, "schema", schema_context_to_use)
+                    {context_to_use, "", true}
+                  end
+
                 col_def = define_column(context, column_name_key, column_config)
                 # update the schema
+                # get the table schema from the this_context
+                table_schema = Map.get(this_context["schema"], plural_table_name)
                 schema = Map.put(table_schema, column_name_key, col_def["config"])
                 comma = if sql_acc == "", do: "", else: ", "
                 sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
-                %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"]}
+                %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"], "context" => context}
               else
                 # add an error in case we are in the add situation
                 # nyd: detect if we are in the add situation
                 msg = "Column " <> column_name_key <> ", already exists"
                 errors = Map.put(acc["errors"], column_name_key, msg)
-                %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors}
+                %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors, "context" => context}
               end
 
             true ->
@@ -585,7 +616,8 @@ defmodule Column do
         %{
           "sql" => "",
           "table_schema" => %{},
-          "errors" => %{}
+          "errors" => %{},
+          "context" => context
         }
       end
 
@@ -651,7 +683,8 @@ defmodule Column do
     %{
       temp_results
       | "sql" => "#{temp_results_sql}#{comma}#{foreign_keys_sql}",
-        "table_schema" => table_schema
+        "table_schema" => table_schema,
+        "context" => context
     }
   end
 

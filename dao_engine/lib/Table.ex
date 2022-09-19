@@ -40,6 +40,7 @@ defmodule Table do
       }
       Utils.log("proc_query_config", proc_query_config, query_config == scan)
       gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
+      context = gen_columns_sql["context"]
       schema = Map.put(context["schema"], plural_table_name, gen_columns_sql["table_schema"])
       context = %{context | "schema" => schema}
       # nyd: also you can get errors back from gen_columns_sql["errors"]
