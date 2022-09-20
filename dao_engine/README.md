@@ -232,3 +232,7 @@ VALUES
 Fixtures means the schedule/que of sql statments or commands to be executed
 
 nyd: implement rules for union clause, like same number of cols, and similer data types
+
+nyd: how does on delete cascade work or on delete set null work when we have puesdo delete turned on ?
+
+nyd: delete prompt that returns a list of table id, or values that are gona be deleted in both pseudo and real delte modes

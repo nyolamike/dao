@@ -12,9 +12,9 @@ defmodule DaoJoinsQuriesTest do
           employee: %{
             "emp_id" => "int",
             "first_name" => "string",
-            "banana" => %{
+            "branch" => %{
               "branch_name" => "str",
-              # "dao@link" => {"emp_id","mgr_id"}
+              "dao@link" => {"emp_id","mgr_id"}
             }
           }
         ]
