@@ -549,142 +549,42 @@ defmodule Column do
               table_schema = acc["table_schema"]
 
               if Map.has_key?(table_schema, column_name_key) == false do
-                #we need to detect for foreign key situations
-                this_context =
-                  if is_propbably_ajoin_term(column_config) do
-                    if Map.has_key?(column_config, "dao@link") || Map.has_key?(column_config, "dao@join") do
-                      #this is a custome or implicit join situation
-                      #nyd: in future we should be able to support situation like this {base_col_name} or "base_col_name"
-                      #nyd: in such a situation it means that the base table is auto linking to the primary key of the embedded table
-                      #nyd: but i think the tense(single or plural) of the colname in the base table may also be a very importnat factor to consider
-                      {base_col_name,embeded_col_name} =
-                        if  Map.has_key?(column_config, "dao@link") do
-                          column_config["dao@link"]
-                        else
-                          column_config["dao@join"]
-                        end
-                      #cbh on joins
+                # we need to detect for foreign key situations
+                if is_propbably_ajoin_term(column_config) do
+                  Table.process_join_table(
+                    acc,
+                    sql_acc,
+                    table_schema,
+                    plural_table_name,
+                    column_name_key,
+                    column_config
+                  )
+                else
+                  col_def = define_column(acc["context"], column_name_key, column_config)
+                  # update the schema
+                  schema = Map.put(table_schema, column_name_key, col_def["config"])
+                  comma = if sql_acc == "", do: "", else: ", "
+                  sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
 
-                    end
-                    #the current table_schema is integrated into the context
-                    acc_context = acc["context"]
-                    schema_context_to_use = Map.put(acc_context["schema"], plural_table_name, table_schema)
-                    context_to_use = Map.put(acc_context, "schema", schema_context_to_use)
-                    recur_query_config = column_config
-                    recur_results = Table.gen_sql_ensure_table_exists(context_to_use, column_name_key, recur_query_config)
-                    {recur_context, any_alter_table_sql, is_def_only} =
-                      case recur_results do
-                        {rec_context, alt_sql} -> {rec_context, alt_sql, false}
-                        {rec_context, alt_sql, is_def_only} -> {rec_context, alt_sql, is_def_only}
-                        rec_context -> {rec_context, "", false}
-                      end
-
-                    #check if there is a foreign key in the child table, if its not there it will be added
-                    table_schema = Map.get(recur_context["schema"], plural_table_name)
-                    parent_plural_table_name =  Inflex.pluralize(column_name_key)
-                    parent_single_table_name =  Inflex.singularize(column_name_key)
-                    is_foreign_key_in_table_schema =
-                      Enum.reduce(table_schema, false, fn {child_col_name, child_col_config}, acc ->
-                        cond do
-                          acc == true -> true
-                          is_map(child_col_config) && Map.has_key?(child_col_config, "fk") && parent_plural_table_name == child_col_config["fk"]  ->
-                            true
-                          is_binary(child_col_config) && child_col_config == "fk" ->
-                            #we infer the parent-child relationship
-                            expected_name = "#{parent_single_table_name}_id"
-                            expected_name == child_col_name
-                          true -> false
-                        end
-                      end)
-
-                    expected_name = "#{parent_single_table_name}_id"
-                    {recur_context} =
-                      if is_foreign_key_in_table_schema == false do
-                        #nyd: if the child_col_config is a mpa you may want to make some more investigations, like if there is a primary key defined
-                        #if there is no primanry key, them we can use the _id
-                        parent_col_name = "id"
-                        #check if parent table has a primary key
-                        parent_table_schema = Map.get(recur_context["schema"],parent_plural_table_name)
-                        found_parent_pks = get_primary_keys(parent_table_schema)
-                        IO.inspect(found_parent_pks)
-                        length_found_parent_pks = length(found_parent_pks)
-                        {recur_context, parent_col_name} =
-                          case length_found_parent_pks do
-                            0 ->
-                              #no primary keys, so we add one, this is irrespective of the default pks setting
-                              #because one has implicitly declared this by having the child>parent query structure
-                              #without an id on the parent table, the db will not be consistant
-                              pk_column_config = define("pk")
-                              parent_table_schema =
-                                Map.put(parent_table_schema, parent_col_name, pk_column_config)
-                              parent_sql_table_name = Table.sql_table_name(recur_context, parent_plural_table_name)
-                              altering_sql = "ALTER TABLE #{parent_sql_table_name} ADD #{String.trim(pk_column_config["sql"])}"
-                              #update the context
-                              updated_schema = Map.put(recur_context["schema"], parent_plural_table_name, parent_table_schema)
-                              recur_context = Map.put(recur_context, "schema", updated_schema)
-                              auto_schema_changes = recur_context["auto_schema_changes"] ++ [altering_sql]
-                              recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
-                              IO.inspect(recur_context)
-                              {recur_context, parent_col_name}
-                            1 ->
-                              #has a single pk
-                              Utils.log("one key", found_parent_pks)
-                              {recur_context, hd(found_parent_pks)}
-                            _ ->
-                              #many primary keys
-                              #nyd: pick the first one or throw an error depending on the config in the context
-                              #nyd: for we just pick the first one, untill we find a better solution of choosing the right one
-                              Utils.log("many keys", found_parent_pks)
-                              {recur_context, hd(found_parent_pks)}
-                          end
-
-                        fk_column_config = define(%{
-                          "fk" => parent_single_table_name,
-                          "on" => parent_col_name,
-                          "on_delete" => "cascade"
-                        })
-                        table_schema=
-                          Map.put(table_schema, expected_name, fk_column_config)
-                        sql_table_name = Table.sql_table_name(recur_context, plural_table_name)
-
-                        col_def = define_column(recur_context, expected_name, fk_column_config)
-                        altering_sql = "ALTER TABLE #{sql_table_name} ADD #{String.trim(col_def["sql"])}"
-                        altering_sql = "#{altering_sql}, ADD FOREIGN KEY(#{expected_name}) REFERENCES #{parent_plural_table_name}(#{parent_col_name}) ON DELETE SET CASCADE"
-
-                        #update the context
-                        updated_schema = Map.put(recur_context["schema"], plural_table_name, table_schema)
-                        recur_context = Map.put(recur_context, "schema", updated_schema)
-                        auto_schema_changes = recur_context["auto_schema_changes"] ++ [altering_sql]
-                        recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
-                        {recur_context}
-                      else
-                        Utils.log("key_in_table_schema", table_schema)
-                        {recur_context}
-                      end
-                    Utils.log("kapyata", recur_context)
-                    recur_context
-                  else
-                    #the current table_schema is integrated into the context
-                    acc_context = acc["context"]
-                    schema_context_to_use = Map.put(acc_context["schema"], plural_table_name, table_schema)
-                    Map.put(acc_context, "schema", schema_context_to_use)
-                  end
-
-                # get the table schema from the this_context
-                table_schema = Map.get(this_context["schema"], plural_table_name)
-
-                col_def = define_column(context, column_name_key, column_config)
-                # update the schema
-                schema = Map.put(table_schema, column_name_key, col_def["config"])
-                comma = if sql_acc == "", do: "", else: ", "
-                sql = sql_acc <> comma <> "ADD " <> String.trim(col_def["sql"])
-                %{"sql" => sql, "table_schema" => schema, "errors" => acc["errors"], "context" => context}
+                  %{
+                    "sql" => sql,
+                    "table_schema" => schema,
+                    "errors" => acc["errors"],
+                    "context" => context
+                  }
+                end
               else
                 # add an error in case we are in the add situation
                 # nyd: detect if we are in the add situation
                 msg = "Column " <> column_name_key <> ", already exists"
                 errors = Map.put(acc["errors"], column_name_key, msg)
-                %{"sql" => sql_acc, "table_schema" => table_schema, "errors" => errors, "context" => context}
+
+                %{
+                  "sql" => sql_acc,
+                  "table_schema" => table_schema,
+                  "errors" => errors,
+                  "context" => acc["context"]
+                }
               end
 
             true ->
@@ -762,8 +662,7 @@ defmodule Column do
     %{
       temp_results
       | "sql" => "#{temp_results_sql}#{comma}#{foreign_keys_sql}",
-        "table_schema" => table_schema,
-        "context" => context
+        "table_schema" => table_schema
     }
   end
 
@@ -913,29 +812,33 @@ defmodule Column do
     ]
 
     cond do
-      is_map(term) && Map.has_key?(term, "type") &&  (term["type"] in data_types)  -> true
-      is_binary(term) && (term in data_types) -> true
+      is_map(term) && Map.has_key?(term, "type") && term["type"] in data_types -> true
+      is_binary(term) && term in data_types -> true
       true -> false
     end
   end
 
   def is_propbably_ajoin_term(term) do
     is_data_type(term) == false &&
-    (
-      ( is_map(term) || is_list(term) ) ||
-      ( is_map(term) && Map.has_key?(term, "dao@link") ) ||
-      ( is_map(term) && Map.has_key?(term, "dao@join") )
-    )
+      (is_map(term) || is_list(term) ||
+         (is_map(term) && Map.has_key?(term, "dao@link")) ||
+         (is_map(term) && Map.has_key?(term, "dao@join"))) &&
+      (is_map(term) &&
+         Map.has_key?(term, "fk") == false)
   end
 
   def get_primary_keys(table_schema) do
     Enum.reduce(table_schema, [], fn {parent_col_name, parent_col_config}, acc ->
       cond do
-        is_map(parent_col_config) && Map.has_key?(parent_col_config, "is_primary_key") &&  parent_col_config["is_primary_key"] == true->
+        is_map(parent_col_config) && Map.has_key?(parent_col_config, "is_primary_key") &&
+            parent_col_config["is_primary_key"] == true ->
           acc ++ [parent_col_name]
+
         is_binary(parent_col_config) && parent_col_config == "pk" ->
           acc ++ [parent_col_name]
-        true -> acc
+
+        true ->
+          acc
       end
     end)
   end

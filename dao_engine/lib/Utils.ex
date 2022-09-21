@@ -104,7 +104,8 @@ defmodule Utils do
       "dao@average",
       "dao@avg",
       "dao@sum",
-      "dao@total"
+      "dao@total",
+      "dao@link"
     ]
   end
 end

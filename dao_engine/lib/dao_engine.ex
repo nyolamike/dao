@@ -423,7 +423,7 @@ defmodule DaoEngine do
                     end
 
                   true ->
-                    #check for parent tables and joins
+                    # check for parent tables and joins
                     if key == :branch do
                       IO.inspect(format_config)
                     end

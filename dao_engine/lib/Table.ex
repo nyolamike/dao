@@ -34,10 +34,11 @@ defmodule Table do
         "emp_id" => "int",
         "first_name" => "string",
         branch: %{
-          "branch_name" => "str",
+          "branch_name" => "str"
           # "dao@link" => {"emp_id","mgr_id"}
         }
       }
+
       Utils.log("proc_query_config", proc_query_config, query_config == scan)
       gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
       context = gen_columns_sql["context"]
@@ -83,15 +84,50 @@ defmodule Table do
           "sql" => "",
           "table_schema" => %{},
           "is_def_only" => true,
-          "foreign_keys_sql" => []
+          "foreign_keys_sql" => [],
+          "context" => context
         }
 
         Enum.reduce(query_config["columns"], acc, fn {column_name_key, column_config}, acc ->
           skips = Utils.skip_keys()
 
-          if column_name_key in skips do
-            # just continue
-            acc
+          if column_name_key in skips ||
+               (Column.is_propbably_ajoin_term(column_config) && column_name_key in skips == false) do
+            is_propbably_ajoin_term =
+              Column.is_propbably_ajoin_term(column_config) && column_name_key in skips == false
+
+            if is_propbably_ajoin_term do
+              Utils.log("lumonde", column_config)
+
+              foo =
+                Table.process_join_table(
+                  acc,
+                  "",
+                  table_schema,
+                  plural_table_name,
+                  column_name_key,
+                  column_config
+                )
+
+              # "errors" => nil,
+              # "sql" => "",
+
+              Utils.log("foo table_schema", foo["table_schema"])
+              Utils.log("ptn", plural_table_name)
+              Utils.log("ptn foo ctxt schema", foo["context"]["schema"][plural_table_name])
+              Utils.log("ptn acc ctxt schema", acc["context"]["schema"][plural_table_name])
+
+              Utils.log("cnk", column_name_key)
+              column_name_key_plural = Inflex.pluralize(column_name_key)
+              Utils.log("ptn foo ctxt schema", foo["context"]["schema"][column_name_key_plural])
+              Utils.log("ptn acc ctxt schema", acc["context"]["schema"][column_name_key_plural])
+
+              # %{acc | "context" => foo["context"], "table_schema" => foo["table_schema"]}
+              %{acc | "context" => foo["context"]}
+            else
+              # just continue
+              acc
+            end
           else
             sql_acc = String.trim(acc["sql"])
             table_schema = acc["table_schema"]
@@ -130,7 +166,8 @@ defmodule Table do
               "sql" => sql,
               "table_schema" => schema,
               "is_def_only" => is_def_only,
-              "foreign_keys_sql" => foreign_sql
+              "foreign_keys_sql" => foreign_sql,
+              "context" => acc["context"]
             }
           end
         end)
@@ -139,9 +176,13 @@ defmodule Table do
           "sql" => "",
           "table_schema" => %{},
           "is_def_only" => true,
-          "foreign_keys_sql" => []
+          "foreign_keys_sql" => [],
+          "context" => context
         }
       end
+
+    # get back a new context in case the above if condition updated it
+    context = table_col_def["context"]
 
     # scan for foreign keys
     foreign_results = Column.process_foreign_keys(table_col_def, query_config)
@@ -529,5 +570,160 @@ defmodule Table do
     auto_schema_changes = context["auto_schema_changes"] ++ ["dao@skip: " <> sql]
     context = %{context | "auto_schema_changes" => auto_schema_changes}
     {context, sql}
+  end
+
+  def process_join_table(
+        acc,
+        sql_acc,
+        table_schema,
+        plural_table_name,
+        column_name_key,
+        column_config
+      ) do
+    # we cannot add the table as a column for that base table so we process it here
+    if Map.has_key?(column_config, "dao@link") || Map.has_key?(column_config, "dao@join") do
+      # this is a custome or implicit join situation
+      # nyd: in future we should be able to support situation like this {base_col_name} or "base_col_name"
+      # nyd: in such a situation it means that the base table is auto linking to the primary key of the embedded table
+      # nyd: but i think the tense(single or plural) of the colname in the base table may also be a very importnat factor to consider
+      {base_col_name, embeded_col_name} =
+        if Map.has_key?(column_config, "dao@link") do
+          column_config["dao@link"]
+        else
+          column_config["dao@join"]
+        end
+
+      # cbh on joins
+    end
+
+    # the current table_schema is integrated into the context
+    acc_context = acc["context"]
+    schema_context_to_use = Map.put(acc_context["schema"], plural_table_name, table_schema)
+    context_to_use = Map.put(acc_context, "schema", schema_context_to_use)
+    recur_query_config = column_config
+    # cbh: Utils.log("recur_query_config", recur_query_config)
+    recur_results =
+      Table.gen_sql_ensure_table_exists(context_to_use, column_name_key, recur_query_config)
+
+    {recur_context, any_alter_table_sql, is_def_only} =
+      case recur_results do
+        {rec_context, alt_sql} -> {rec_context, alt_sql, false}
+        {rec_context, alt_sql, is_def_only} -> {rec_context, alt_sql, is_def_only}
+        rec_context -> {rec_context, "", false}
+      end
+
+    # check if there is a foreign key in the child table, if its not there it will be added
+    table_schema = Map.get(recur_context["schema"], plural_table_name)
+    parent_plural_table_name = Inflex.pluralize(column_name_key)
+    parent_single_table_name = Inflex.singularize(column_name_key)
+
+    is_foreign_key_in_table_schema =
+      Enum.reduce(table_schema, false, fn {child_col_name, child_col_config}, acc ->
+        cond do
+          acc == true ->
+            true
+
+          is_map(child_col_config) && Map.has_key?(child_col_config, "fk") &&
+              parent_plural_table_name == child_col_config["fk"] ->
+            true
+
+          is_binary(child_col_config) && child_col_config == "fk" ->
+            # we infer the parent-child relationship
+            expected_name = "#{parent_single_table_name}_id"
+            expected_name == child_col_name
+
+          true ->
+            false
+        end
+      end)
+
+    expected_name = "#{parent_single_table_name}_id"
+
+    {recur_context} =
+      if is_foreign_key_in_table_schema == false do
+        # nyd: if the child_col_config is a mpa you may want to make some more investigations, like if there is a primary key defined
+        # if there is no primanry key, them we can use the _id
+        parent_col_name = "id"
+        # check if parent table has a primary key
+        parent_table_schema = Map.get(recur_context["schema"], parent_plural_table_name)
+        found_parent_pks = Column.get_primary_keys(parent_table_schema)
+        length_found_parent_pks = length(found_parent_pks)
+
+        {recur_context, parent_col_name} =
+          case length_found_parent_pks do
+            0 ->
+              # no primary keys, so we add one, this is irrespective of the default pks setting
+              # because one has implicitly declared this by having the child>parent query structure
+              # without an id on the parent table, the db will not be consistant
+              pk_column_config = Column.define("pk")
+
+              parent_table_schema =
+                Map.put(parent_table_schema, parent_col_name, pk_column_config)
+
+              parent_sql_table_name =
+                Table.sql_table_name(recur_context, parent_plural_table_name)
+
+              altering_sql =
+                "ALTER TABLE #{parent_sql_table_name} ADD #{String.trim(pk_column_config["sql"])}"
+
+              # update the context
+              updated_schema =
+                Map.put(recur_context["schema"], parent_plural_table_name, parent_table_schema)
+
+              recur_context = Map.put(recur_context, "schema", updated_schema)
+              auto_schema_changes = recur_context["auto_schema_changes"] ++ [altering_sql]
+              recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
+              # cbh: IO.inspect(recur_context)
+              {recur_context, parent_col_name}
+
+            1 ->
+              # has a single pk
+              Utils.log("one key", found_parent_pks)
+              {recur_context, hd(found_parent_pks)}
+
+            _ ->
+              # many primary keys
+              # nyd: pick the first one or throw an error depending on the config in the context
+              # nyd: for we just pick the first one, untill we find a better solution of choosing the right one
+              Utils.log("many keys", found_parent_pks)
+              {recur_context, hd(found_parent_pks)}
+          end
+
+        fk_column_config =
+          Column.define(%{
+            "fk" => parent_single_table_name,
+            "on" => parent_col_name,
+            "on_delete" => "cascade"
+          })
+
+        table_schema = Map.put(table_schema, expected_name, fk_column_config)
+        sql_table_name = Table.sql_table_name(recur_context, plural_table_name)
+
+        col_def = Column.define_column(recur_context, expected_name, fk_column_config)
+        altering_sql = "ALTER TABLE #{sql_table_name} ADD #{String.trim(col_def["sql"])}"
+
+        altering_sql =
+          "#{altering_sql}, ADD FOREIGN KEY(#{expected_name}) REFERENCES #{parent_plural_table_name}(#{parent_col_name}) ON DELETE SET CASCADE"
+
+        # update the context
+        updated_schema = Map.put(recur_context["schema"], plural_table_name, table_schema)
+        recur_context = Map.put(recur_context, "schema", updated_schema)
+        auto_schema_changes = recur_context["auto_schema_changes"] ++ [altering_sql]
+        recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
+        {recur_context}
+      else
+        Utils.log("key_in_table_schema", table_schema)
+        {recur_context}
+      end
+
+    table_schema = Map.get(recur_context["schema"], plural_table_name)
+
+    # Utils.log("kapyata", recur_context)
+    %{
+      "sql" => sql_acc,
+      "table_schema" => table_schema,
+      "errors" => acc["errors"],
+      "context" => recur_context
+    }
   end
 end

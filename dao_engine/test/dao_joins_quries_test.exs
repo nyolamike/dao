@@ -12,9 +12,17 @@ defmodule DaoJoinsQuriesTest do
           employee: %{
             "emp_id" => "int",
             "first_name" => "string",
-            "branch" => %{
+            "banana" => %{
               "branch_name" => "str",
-              "dao@link" => {"emp_id","mgr_id"}
+              "dao@link" => {"emp_id", "mgr_id"},
+              "bongo" => %{
+                "bongo_name" => "str",
+                "dao@link" => {"id", "bongo-id"},
+                "katweka" => %{
+                  "makida" => 34,
+                  "dao@link" => {"id", "bongo-id"}
+                }
+              }
             }
           }
         ]
@@ -24,20 +32,7 @@ defmodule DaoJoinsQuriesTest do
     results = Dao.execute(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
 
-    expected_cmd_results = [
-      get: [
-        names_in_our_db: [
-          dao@combine: %{
-            "is_list" => true,
-            "sql" =>
-              "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE is_deleted = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE is_deleted = 0"
-          }
-        ]
-      ]
-    ]
-
-    assert context == results_context
-    assert expected_cmd_results == cmd_results
+    #IO.inspect(results)
   end
 
   defp get_company_context() do

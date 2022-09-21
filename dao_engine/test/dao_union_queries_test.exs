@@ -99,7 +99,8 @@ defmodule DaoUnionQueriesTest do
         all_money: [
           dao@combine: %{
             "is_list" => true,
-            "sql" => "SELECT `company_db.employees.salary` FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.works_withs.total_sales` FROM `company_db.works_withs` WHERE is_deleted = 0"
+            "sql" =>
+              "SELECT `company_db.employees.salary` FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.works_withs.total_sales` FROM `company_db.works_withs` WHERE is_deleted = 0"
           }
         ]
       ]
