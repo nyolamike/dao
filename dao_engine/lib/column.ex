@@ -820,11 +820,14 @@ defmodule Column do
 
   def is_propbably_ajoin_term(term) do
     is_data_type(term) == false &&
-      (is_map(term) || is_list(term) ||
+      (is_map(term) ||
+         is_list(term) ||
          (is_map(term) && Map.has_key?(term, "dao@link")) ||
          (is_map(term) && Map.has_key?(term, "dao@join"))) &&
       (is_map(term) &&
-         Map.has_key?(term, "fk") == false)
+         Map.has_key?(term, "fk") == false) &&
+      (is_map(term) &&
+         Map.has_key?(term, "as") == false)
   end
 
   def get_primary_keys(table_schema) do
@@ -839,6 +842,32 @@ defmodule Column do
 
         true ->
           acc
+      end
+    end)
+  end
+
+  def get_foreign_key_config(table_schema, parent_table_name) do
+    parent_plural_table_name = Inflex.pluralize(parent_table_name)
+    Enum.reduce_while(table_schema, {nil, nil}, fn {col_name, col_config}, acc ->
+      cond do
+        is_map(col_config) && Map.has_key?(col_config, "fk") &&
+        col_config["fk"] == parent_plural_table_name ->
+          {:halt, {col_name, col_config}}
+
+        is_binary(col_config) && col_config == "fk" ->
+          plural_col_name = String.trim_trailing(col_name, "_id") |> Inflex.pluralize()
+          if plural_col_name == parent_plural_table_name do
+            def_col_config = define(%{
+              "fk" => plural_col_name,
+              "on" => "id",
+              "on_delete" => "cascade"
+            })
+            {:halt, {col_name, def_col_config}}
+          else
+            {:cont, acc}
+          end
+        true ->
+          {:cont, acc}
       end
     end)
   end

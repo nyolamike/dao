@@ -97,7 +97,8 @@ defmodule Table do
               Column.is_propbably_ajoin_term(column_config) && column_name_key in skips == false
 
             if is_propbably_ajoin_term do
-              Utils.log("lumonde", column_config)
+              #nyd: clean up variable names and comments
+              # Utils.log("lumonde", column_config)
 
               foo =
                 Table.process_join_table(
@@ -111,19 +112,22 @@ defmodule Table do
 
               # "errors" => nil,
               # "sql" => "",
+              new_table_schema = Map.merge(foo["table_schema"], acc["table_schema"])
+              # Utils.log("foo table_schema", foo["table_schema"])
+              # Utils.log("acc table_schema", acc["table_schema"])
+              # Utils.log("new_table_schema", new_table_schema)
 
-              Utils.log("foo table_schema", foo["table_schema"])
-              Utils.log("ptn", plural_table_name)
-              Utils.log("ptn foo ctxt schema", foo["context"]["schema"][plural_table_name])
-              Utils.log("ptn acc ctxt schema", acc["context"]["schema"][plural_table_name])
+              # Utils.log("ptn", plural_table_name)
+              # Utils.log("ptn foo ctxt schema", foo["context"]["schema"][plural_table_name])
+              # Utils.log("ptn acc ctxt schema", acc["context"]["schema"][plural_table_name])
 
-              Utils.log("cnk", column_name_key)
-              column_name_key_plural = Inflex.pluralize(column_name_key)
-              Utils.log("ptn foo ctxt schema", foo["context"]["schema"][column_name_key_plural])
-              Utils.log("ptn acc ctxt schema", acc["context"]["schema"][column_name_key_plural])
+              # Utils.log("cnk", column_name_key)
+              # column_name_key_plural = Inflex.pluralize(column_name_key)
+              # Utils.log("cnk foo ctxt schema", foo["context"]["schema"][column_name_key_plural])
+              # Utils.log("cnk acc ctxt schema", acc["context"]["schema"][column_name_key_plural])
 
-              # %{acc | "context" => foo["context"], "table_schema" => foo["table_schema"]}
-              %{acc | "context" => foo["context"]}
+              # %{acc | "context" => foo["context"]}
+              %{acc | "context" => foo["context"], "table_schema" => new_table_schema}
             else
               # just continue
               acc
@@ -341,6 +345,11 @@ defmodule Table do
   def sql_table_name(context, table_name) do
     plural_table_name = Inflex.pluralize(table_name)
     "`#{context["database_name"]}.#{plural_table_name}`"
+  end
+
+  def sql_table_column_name(context, table_name, column_name) do
+    plural_table_name = Inflex.pluralize(table_name)
+    "`#{context["database_name"]}.#{plural_table_name}.#{column_name}`"
   end
 
   def preprocess_query_config(context, config_table_def) when is_list(config_table_def) do
@@ -672,20 +681,18 @@ defmodule Table do
 
               recur_context = Map.put(recur_context, "schema", updated_schema)
               auto_schema_changes = recur_context["auto_schema_changes"] ++ [altering_sql]
+              auto_schema_changes = Utils.order_auto_schema_changes(auto_schema_changes)
               recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
-              # cbh: IO.inspect(recur_context)
               {recur_context, parent_col_name}
 
             1 ->
               # has a single pk
-              Utils.log("one key", found_parent_pks)
               {recur_context, hd(found_parent_pks)}
 
             _ ->
               # many primary keys
               # nyd: pick the first one or throw an error depending on the config in the context
               # nyd: for we just pick the first one, untill we find a better solution of choosing the right one
-              Utils.log("many keys", found_parent_pks)
               {recur_context, hd(found_parent_pks)}
           end
 
@@ -712,7 +719,7 @@ defmodule Table do
         recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
         {recur_context}
       else
-        Utils.log("key_in_table_schema", table_schema)
+        #Utils.log("key_in_table_schema", table_schema)
         {recur_context}
       end
 

@@ -108,4 +108,29 @@ defmodule Utils do
       "dao@link"
     ]
   end
+
+  def order_auto_schema_changes(list) do
+    # CREATE, ALTER
+    init_lists_map = %{
+      "creates" => [],
+      "alters" => [],
+      "others" => []
+    }
+
+    sqls =
+      Enum.reduce(list, init_lists_map, fn item, acc ->
+        cond do
+          String.starts_with?(item, "CREATE") ->
+            %{acc | "creates" => acc["creates"] ++ [item]}
+
+          String.starts_with?(item, "ALTER") ->
+            %{acc | "alters" => acc["alters"] ++ [item]}
+
+          true ->
+            %{acc | "others" => acc["others"] ++ [item]}
+        end
+      end)
+
+    sqls["creates"] ++ sqls["alters"] ++ sqls["others"]
+  end
 end

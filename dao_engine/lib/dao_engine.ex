@@ -306,7 +306,12 @@ defmodule DaoEngine do
     end)
   end
 
-  def gen_sql_for_get_fixture_helper(result_acc, node_name_key, query_config) do
+  def gen_sql_for_get_fixture_helper(
+        result_acc,
+        node_name_key,
+        query_config,
+        return_parts \\ false
+      ) do
     str_node_name_key = Atom.to_string(node_name_key)
     is_list = Utils.is_word_plural?(query_config, str_node_name_key)
     # check if the table exists in the schema
@@ -333,11 +338,11 @@ defmodule DaoEngine do
         ""
       else
         sql = "SELECT"
-
-        specififc_cols_sql =
+        %{"sql_acc" => specififc_cols_sql, "joins" => joins_list } =
           cond do
             is_list(query_config) ->
               # nyd: we expect that someone just provided a list of specific columns to be fecthed
+              temp_res =
               Enum.reduce(query_config, "", fn key, sql_acc ->
                 skip = Utils.skip_keys()
 
@@ -349,18 +354,23 @@ defmodule DaoEngine do
                   "#{sql_acc}#{comma}#{column_name}"
                 end
               end)
+              %{"sql_acc" => temp_res, "joins" => [] }
 
             is_map(query_config) ->
               processed_query_config = Table.preprocess_query_config(context, query_config)
 
-              Enum.reduce(processed_query_config["columns"], "", fn {key, format_config},
-                                                                    sql_acc ->
+              cols_res_acc = %{
+                "sql_acc" => "",
+                "joins" => []
+              }
+
+              Enum.reduce(processed_query_config["columns"], cols_res_acc, fn {key, format_config}, %{ "sql_acc" => sql_acc, "joins" => joins_acc} ->
                 skip = Utils.skip_keys()
                 col_flags = Utils.col_flags()
 
                 cond do
                   key in skip && key in col_flags == false ->
-                    sql_acc
+                    %{"sql_acc" => sql_acc, "joins" => joins_acc }
 
                   key in skip && key in col_flags == true ->
                     # processable column flag
@@ -376,8 +386,8 @@ defmodule DaoEngine do
                             "#{acc_uniq}#{comma}#{column_name}"
                           end)
 
-                        "DISTINCT #{distinct_sql}"
-
+                        temp_sql = "DISTINCT #{distinct_sql}"
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
                       key in ["dao@count"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -389,8 +399,8 @@ defmodule DaoEngine do
                             "#{acc_uniq}#{comma}#{column_name}"
                           end)
 
-                        "COUNT(#{distinct_sql})"
-
+                        temp_sql = "COUNT(#{distinct_sql})"
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
                       key in ["dao@average", "dao@avg"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -402,8 +412,8 @@ defmodule DaoEngine do
                             "#{acc_uniq}#{comma}#{column_name}"
                           end)
 
-                        "AVG(#{distinct_sql})"
-
+                        temp_sql = "AVG(#{distinct_sql})"
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
                       key in ["dao@total", "dao@sum"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -415,36 +425,96 @@ defmodule DaoEngine do
                             "#{acc_uniq}#{comma}#{column_name}"
                           end)
 
-                        "SUM(#{distinct_sql})"
-
+                        temp_sql = "SUM(#{distinct_sql})"
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
                       true ->
                         # nyd: take care of other scenarios
-                        sql_acc
+                        %{"sql_acc" => sql_acc, "joins" => joins_acc }
                     end
 
                   true ->
                     # check for parent tables and joins
-                    if key == :branch do
-                      IO.inspect(format_config)
-                    end
+                    is_propbably_ajoin_term = Column.is_propbably_ajoin_term(format_config)
+                    # sql_acc  =
+                    if is_propbably_ajoin_term do
+                      join_table_key = String.to_atom(key)
 
-                    comma = if sql_acc == "", do: "", else: ", "
-                    column_name = Column.sql_column_name(context, str_node_name_key, key)
+                      xresult =
+                        gen_sql_for_get_fixture_helper(
+                          result_acc,
+                          join_table_key,
+                          format_config,
+                          true
+                        )
 
-                    column_name =
-                      cond do
-                        is_map(format_config) && Map.has_key?(format_config, "as") ->
-                          "#{column_name} AS #{format_config["as"]}"
+                      {base_col_name, embed_col_name, join_type} =
+                        if is_map(format_config) && (Map.has_key?(format_config, "dao@link") || Map.has_key?(format_config, "dao@join")) do
+                          join_conf =
+                          if Map.has_key?(format_config, "dao@link") do
+                            format_config["dao@link"]
+                          else
+                            format_config["dao@join"]
+                          end
+                          case join_conf do
+                            {bcn, ecn} -> {bcn, ecn, "LEFT"}
+                            {bcn, ecn, jtype} ->
+                              jtype = jtype |> String.trim() |> String.upcase()
+                              #OUTER is full outer join
+                              if jtype in ["LEFT", "RIGHT", "OUTER", "INNER"] do
+                                {bcn, ecn, jtype}
+                              else
+                                throw("Unkown join type " <> jtype)
+                              end
+                          end
+                        else
+                          {"", "", "LEFT"}
+                        end
 
-                        is_binary(format_config) && Column.is_data_type(format_config) == false ->
-                          # nyd: this will be used as the as shorthand for now
-                          "#{column_name} AS #{format_config}"
+                      sqlx = xresult["fixture_list"][join_table_key]["sql"]
+                      #example FROM employee JOIN branch ON employee.emp_id = branch.mgr_id
+                      join_plural_table_key = Inflex.pluralize(key)
+                      join_sql_table_name =  Table.sql_table_name(context, join_plural_table_key)
 
-                        true ->
-                          column_name
+                      join_sql =
+                      if base_col_name != "" do
+                        #this means the linkage was explicitly scpecified {xx, yy}
+                        select_table_column_name = Table.sql_table_column_name(context, str_node_name_key, base_col_name)
+                        join_table_column_name = Table.sql_table_column_name(context, join_plural_table_key, embed_col_name)
+                        " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
+                      else
+                        str_node_plural_name_key = Inflex.pluralize(str_node_name_key)
+                        {fk_name, fk_col_config} = Column.get_foreign_key_config(context["schema"][str_node_plural_name_key], join_plural_table_key)
+                        select_table_column_name = Table.sql_table_column_name(context, str_node_name_key, fk_name)
+                        link_col_name = fk_col_config["on"]
+                        join_table_column_name = Table.sql_table_column_name(context, join_plural_table_key, link_col_name)
+                        " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
                       end
 
-                    "#{sql_acc}#{comma}#{column_name}"
+                      parent_sql = String.trim(sqlx["select"])
+                      comma = if sql_acc == "", do: "", else: ", "
+                      temp_sql = "#{sql_acc}#{comma}#{parent_sql}"
+                      joins = sqlx["joins"] ++ [join_sql]
+                      %{"sql_acc" => temp_sql, "joins" => joins_acc ++ joins }
+                    else
+                      comma = if sql_acc == "", do: "", else: ", "
+                      column_name = Column.sql_column_name(context, str_node_name_key, key)
+
+                      column_name =
+                        cond do
+                          is_map(format_config) && Map.has_key?(format_config, "as") ->
+                            "#{column_name} AS #{format_config["as"]}"
+
+                          is_binary(format_config) && Column.is_data_type(format_config) == false ->
+                            # nyd: this will be used as the as shorthand for now
+                            "#{column_name} AS #{format_config}"
+
+                          true ->
+                            column_name
+                        end
+
+                      temp_sql = "#{sql_acc}#{comma}#{column_name}"
+                      %{"sql_acc" => temp_sql, "joins" => joins_acc}
+                    end
                 end
               end)
           end
@@ -470,7 +540,30 @@ defmodule DaoEngine do
         group_by_sql = GroupBy.gen_sql(context, query_config)
         pagination_sql = Pagination.gen_sql(context, query_config)
 
-        "#{sql} #{specififc_cols_sql} FROM #{Table.sql_table_name(result_acc["context"], str_node_name_key)}#{where_sql}#{order_by_sql}#{group_by_sql}#{pagination_sql}"
+        joins_sql =
+        if length(joins_list) > 0 do
+          IO.inspect(joins_list)
+          # jsql = " LEFT JOIN " <> Enum.join(joins_list, " LEFT JOIN ")
+          Enum.join(joins_list, "")
+        else
+          ""
+        end
+
+        select_table_name = Table.sql_table_name(result_acc["context"], str_node_name_key)
+
+        if return_parts == true do
+          %{
+            "select" => specififc_cols_sql,
+            "from" => select_table_name,
+            "where" => where_sql,
+            "orderby" => order_by_sql,
+            "groupby" => group_by_sql,
+            "pagination" => pagination_sql,
+            "joins" => joins_list
+          }
+        else
+          "#{sql} #{specififc_cols_sql} FROM #{select_table_name}#{joins_sql}#{where_sql}#{order_by_sql}#{group_by_sql}#{pagination_sql}"
+        end
       end
 
     cond do
