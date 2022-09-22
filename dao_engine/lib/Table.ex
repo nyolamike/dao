@@ -595,7 +595,7 @@ defmodule Table do
       # nyd: in future we should be able to support situation like this {base_col_name} or "base_col_name"
       # nyd: in such a situation it means that the base table is auto linking to the primary key of the embedded table
       # nyd: but i think the tense(single or plural) of the colname in the base table may also be a very importnat factor to consider
-      {base_col_name, embeded_col_name} =
+      join_config =
         if Map.has_key?(column_config, "dao@link") do
           column_config["dao@link"]
         else

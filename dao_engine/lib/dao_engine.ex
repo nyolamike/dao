@@ -542,7 +542,7 @@ defmodule DaoEngine do
 
         joins_sql =
         if length(joins_list) > 0 do
-          IO.inspect(joins_list)
+          # IO.inspect(joins_list)
           # jsql = " LEFT JOIN " <> Enum.join(joins_list, " LEFT JOIN ")
           Enum.join(joins_list, "")
         else
