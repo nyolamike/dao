@@ -109,6 +109,10 @@ defmodule Operator do
       "<>" -> "<>"
       "in" -> "IN"
       "is in" -> "IN"
+      "is inside of" -> "IN"
+      "is inside" -> "IN"
+      "is found in" -> "IN"
+      "is contained in" -> "IN"
       "IN" -> "IN"
       "ends with" -> "%LIKE"
       "ends_with" -> "%LIKE"
@@ -138,21 +142,41 @@ defmodule Operator do
       is_tuple(left) == false && is_tuple(right) == false ->
         left_side = left
         possible_value = get_possible_value(context, operator_sql, right)
-        "#{left_side} #{preped_operator_sql} #{possible_value}"
+        case possible_value do
+          {cntxt, pv} -> {cntxt, "#{left_side} #{preped_operator_sql} #{pv}"}
+          pv -> {context , "#{left_side} #{preped_operator_sql} #{pv}"}
+        end
 
       is_tuple(left) == false && is_tuple(right) == true ->
         right_side = process_where_clause(context, query_config, right)
-        "(#{left}) #{preped_operator_sql} #{right_side}"
+        case right_side do
+          {cntxt, rs} -> {cntxt, "(#{left}) #{preped_operator_sql} #{rs}"}
+          rs -> {context, "(#{left}) #{preped_operator_sql} #{rs}"}
+        end
 
       is_tuple(left) == true && is_tuple(right) == false ->
         left_side = process_where_clause(context, query_config, right)
         possible_value = Column.sql_value_format(right)
-        "#{left_side} #{preped_operator_sql} (#{possible_value})"
+        case left_side do
+          {cntxt, ls} -> {cntxt, "#{ls} #{preped_operator_sql} (#{possible_value})"}
+          ls -> {context, "#{ls} #{preped_operator_sql} (#{possible_value})"}
+        end
 
       is_tuple(left) == true && is_tuple(right) == true ->
-        left_side = process_where_clause(context, query_config, left)
         right_side = process_where_clause(context, query_config, right)
-        "(#{left_side}) #{preped_operator_sql} (#{right_side})"
+        {context, right_side} =
+          case right_side do
+            {cntxt, rs} -> {cntxt, rs}
+            rs -> {context, rs}
+          end
+        left_side = process_where_clause(context, query_config, left)
+        {context, left_side} =
+          case left_side do
+            {cntxt, ls} -> {cntxt, ls}
+            ls -> {context, ls}
+          end
+
+        {context, "(#{left_side}) #{preped_operator_sql} (#{right_side})"}
     end
   end
 
@@ -162,16 +186,20 @@ defmodule Operator do
         # we need to wrap the items into brackets ()
         cond do
           is_list(right) ->
-            # its a list of possible values
-            temp_sql =
-              Enum.reduce(right, "", fn item, acc ->
-                possible_value = Column.sql_value_format(item)
-                comma = if acc == "", do: "", else: ", "
-                "#{acc}#{comma}#{possible_value}"
-              end)
+            if Keyword.keyword?(right) do
+              #is probably a nested value scenario
+              value_format(context, right)
+            else
+              # its a list of possible values
+              temp_sql =
+                Enum.reduce(right, "", fn item, acc ->
+                  possible_value = Column.sql_value_format(item)
+                  comma = if acc == "", do: "", else: ", "
+                  "#{acc}#{comma}#{possible_value}"
+                end)
 
-            "(#{temp_sql})"
-
+              "(#{temp_sql})"
+            end
           is_binary(right) ->
             # a string
             # in future this has to be scanned for security reasons and proper formating
@@ -195,12 +223,24 @@ defmodule Operator do
         "'%#{right}%'"
 
       _ ->
-        Column.sql_value_format(right)
+        value_format(context, right)
     end
   end
 
   def get_possible_operator(context, operator_sql) do
     likes = ["%LIKE", "LIKE%", "LIKE", "%LIKE%"]
     if operator_sql in likes, do: "LIKE", else: operator_sql
+  end
+
+  def value_format(context, value) do
+    if is_list(value) && Keyword.keyword?(value) do
+      #this is probaly a nested query scenario
+      nested_query_res = DaoEngine.gen_sql_for_get_fixture(context, [], value)
+      context_res = nested_query_res["context"]
+      {_table_key, %{"sql"=>nested_sql}} = nested_query_res["fixture_list"] |> hd()
+      {context_res, "(#{nested_sql})"}
+    else
+      Column.sql_value_format(value)
+    end
   end
 end

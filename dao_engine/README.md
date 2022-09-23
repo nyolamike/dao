@@ -238,3 +238,5 @@ nyd: how does on delete cascade work or on delete set null work when we have pue
 nyd: delete prompt that returns a list of table id, or values that are gona be deleted in both pseudo and real delte modes
 
 nyd: find ways of implementing a full "OUTER" join, its not supported in mysql so we have to use some kind of way
+
+nyd: find ways of implementing child joins and detecting this intent from the plural or single verb of the specified table

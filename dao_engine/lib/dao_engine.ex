@@ -522,18 +522,23 @@ defmodule DaoEngine do
         specififc_cols_sql =
           if String.trim(specififc_cols_sql) == "", do: "*", else: specififc_cols_sql
 
-        where_sql =
+        {context, where_sql} =
           if is_map(query_config) do
             where_clause_config = Map.get(query_config, "dao@where")
 
             where_sql = Operator.process_where_clause(context, query_config, where_clause_config)
+            {context, where_sql} =
+              case where_sql do
+                {cntx, sql} ->  {cntx, sql}
+                sql ->  {context, sql}
+              end
 
             where_sql = String.trim(where_sql)
             # this applies only if timestamps have not been turned off in the schema
             and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
-            " WHERE #{and_condition}is_deleted = 0"
+            {context, " WHERE #{and_condition}is_deleted = 0"}
           else
-            " WHERE is_deleted = 0"
+            {context, " WHERE is_deleted = 0"}
           end
 
         order_by_sql = OrderBy.gen_sql(context, query_config)
@@ -704,18 +709,18 @@ defmodule DaoEngine do
         context -> {context, "", true}
       end
 
-    update_sql =
+    {context, update_sql} =
       if is_map(query_config) && Map.has_key?(query_config, "dao@def_only") &&
            Map.get(query_config, "dao@def_only") == true do
         # no insert sql will be generated
-        ""
+        {context, ""}
       else
         sql = "UPDATE #{Table.sql_table_name(context, str_node_name_key)}"
 
         cond do
           is_list(query_config) ->
             # nyd: if possible how would we support updating information using lists
-            ""
+            {context, ""}
 
           is_map(query_config) ->
             gen_values_sql =
@@ -734,6 +739,11 @@ defmodule DaoEngine do
             where_clause_config = Map.get(query_config, "dao@where")
 
             where_sql = Operator.process_where_clause(context, query_config, where_clause_config)
+            {context, where_sql} =
+              case where_sql do
+                {cntx, sql} ->  {cntx, sql}
+                sql ->  {context, sql}
+              end
 
             where_sql = String.trim(where_sql)
             # this applies only if timestamps have not been turned off in the schema
@@ -741,7 +751,7 @@ defmodule DaoEngine do
             default_where_clause = "#{and_condition}is_deleted = 0"
 
             # nyd: throw an error if there are no set values
-            "#{sql} SET #{gen_values_sql} WHERE #{default_where_clause}"
+            {context, "#{sql} SET #{gen_values_sql} WHERE #{default_where_clause}"}
 
           true ->
             throw("Unknown query config: gen values sql in generating sqls for update fixture")
@@ -875,6 +885,13 @@ defmodule DaoEngine do
 
           where_sql =
             Operator.process_where_clause(result_acc["context"], query_config, where_config)
+
+          {where_context_changes, where_sql} =
+          case where_sql do
+            {cntx, sql} ->  {cntx, sql}
+            sql ->  {result_acc["context"], sql}
+          end
+          result_acc = Map.put(result_acc, "context", where_context_changes)
 
           where_sql = String.trim(where_sql)
           # this applies only if timestamps have not been turned off in the schema
