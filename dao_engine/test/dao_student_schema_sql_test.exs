@@ -63,6 +63,7 @@ defmodule DaoStudentSchemaSqlTest do
 
   def expeted_changes_sql() do
     [
+      "CREATE DATABASE IF NOT EXISTS company_book",
       "CREATE TABLE `company_book.students` (major VARCHAR(30), name VARCHAR(30), student_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY)"
     ]
   end
@@ -127,6 +128,7 @@ defmodule DaoStudentSchemaSqlTest do
 
   def expeted_changes_v_1_1_sql() do
     [
+      "CREATE DATABASE IF NOT EXISTS company_book",
       "CREATE TABLE `company_book.students` (major VARCHAR(30), name VARCHAR(30), student_id INT(30), PRIMARY KEY(student_id))"
     ]
   end

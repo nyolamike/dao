@@ -243,3 +243,5 @@ nyd: find ways of implementing child joins and detecting this intent from the pl
 
 using this article to install mysql
 https://crew-code.com/install-mysql-server-apple-m1-chip/
+
+#nyd: casting results of queries into Struct custome datatypes during packaging step

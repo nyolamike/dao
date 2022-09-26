@@ -137,7 +137,7 @@ defmodule DaoWildCardsTest do
           client: %{
             "is_list" => false,
             "sql" =>
-            "SELECT * FROM `company_db.clients` WHERE (`company_db.clients.client_name` LIKE '%school%') AND `company_db.clients.is_deleted` = 0"
+              "SELECT * FROM `company_db.clients` WHERE (`company_db.clients.client_name` LIKE '%school%') AND `company_db.clients.is_deleted` = 0"
           }
         ]
       ]

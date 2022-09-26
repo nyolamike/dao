@@ -344,13 +344,14 @@ defmodule Table do
 
   def sql_table_name(context, table_name) do
     plural_table_name = Inflex.pluralize(table_name)
-    "`#{context["database_name"]}.#{plural_table_name}`"
+    "`#{plural_table_name}`"
   end
 
   def sql_table_column_name(context, table_name, column_name) do
-    plural_table_name = Inflex.pluralize(table_name)
-    "`#{context["database_name"]}.#{plural_table_name}.#{column_name}`"
+    Column.sql_column_name(context, table_name, column_name)
   end
+
+
 
   def preprocess_query_config(context, config_table_def) when is_list(config_table_def) do
     preprocess_query_config(context, %{})

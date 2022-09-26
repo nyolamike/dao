@@ -52,7 +52,8 @@ defmodule DaoBasicQueriesMoreTest do
             },
             students: %{
               "is_list" => true,
-              "sql" => "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
+              "sql" =>
+                "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -81,7 +82,8 @@ defmodule DaoBasicQueriesMoreTest do
         all_employees: [
           employees: %{
             "is_list" => true,
-            "sql" => "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
+            "sql" =>
+              "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
@@ -110,7 +112,8 @@ defmodule DaoBasicQueriesMoreTest do
         all_clients: [
           clients: %{
             "is_list" => true,
-            "sql" => "SELECT * FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0"
+            "sql" =>
+              "SELECT * FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0"
           }
         ]
       ]
@@ -149,7 +152,7 @@ defmodule DaoBasicQueriesMoreTest do
             employees: %{
               "is_list" => true,
               "sql" =>
-              "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 ORDER BY salary DESC"
+                "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 ORDER BY salary DESC"
             }
           ]
         },
@@ -158,7 +161,7 @@ defmodule DaoBasicQueriesMoreTest do
            employees: %{
              "is_list" => true,
              "sql" =>
-             "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 ORDER BY salary"
+               "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 ORDER BY salary"
            }
          ]}
       ]
@@ -221,7 +224,8 @@ defmodule DaoBasicQueriesMoreTest do
         first_5_employees: [
           employees: %{
             "is_list" => true,
-            "sql" => "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 LIMIT 5"
+            "sql" =>
+              "SELECT * FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 LIMIT 5"
           }
         ]
       ]
@@ -251,7 +255,7 @@ defmodule DaoBasicQueriesMoreTest do
           employees: %{
             "is_list" => true,
             "sql" =>
-            "SELECT `company_db.employees.first_name`, `company_db.employees.last_name` FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
+              "SELECT `company_db.employees.first_name`, `company_db.employees.last_name` FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
@@ -389,7 +393,7 @@ defmodule DaoBasicQueriesMoreTest do
           employees: %{
             "is_list" => true,
             "sql" =>
-            "SELECT COUNT(`company_db.employees.emp_id`) FROM `company_db.employees` WHERE ((`company_db.employees.sex` = 'F') AND (`company_db.employees.birth_date` >= '1971-01-01')) AND `company_db.employees.is_deleted` = 0"
+              "SELECT COUNT(`company_db.employees.emp_id`) FROM `company_db.employees` WHERE ((`company_db.employees.sex` = 'F') AND (`company_db.employees.birth_date` >= '1971-01-01')) AND `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
@@ -435,7 +439,7 @@ defmodule DaoBasicQueriesMoreTest do
             employees: %{
               "is_list" => true,
               "sql" =>
-              "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'F') AND `company_db.employees.is_deleted` = 0"
+                "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'F') AND `company_db.employees.is_deleted` = 0"
             }
           ]
         },
@@ -444,7 +448,7 @@ defmodule DaoBasicQueriesMoreTest do
            employees: %{
              "is_list" => true,
              "sql" =>
-             "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'M') AND `company_db.employees.is_deleted` = 0"
+               "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'M') AND `company_db.employees.is_deleted` = 0"
            }
          ]},
         {:salary_average_for_all,
@@ -452,7 +456,7 @@ defmodule DaoBasicQueriesMoreTest do
            employees: %{
              "is_list" => true,
              "sql" =>
-             "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
+               "SELECT AVG(`company_db.employees.salary`) FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
            }
          ]}
       ]
@@ -496,21 +500,21 @@ defmodule DaoBasicQueriesMoreTest do
           employees: %{
             "is_list" => true,
             "sql" =>
-            "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'F') AND `company_db.employees.is_deleted` = 0"
+              "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'F') AND `company_db.employees.is_deleted` = 0"
           }
         ],
         salary_sum_for_male: [
           employees: %{
             "is_list" => true,
             "sql" =>
-            "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'M') AND `company_db.employees.is_deleted` = 0"
+              "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE (`company_db.employees.sex` = 'M') AND `company_db.employees.is_deleted` = 0"
           }
         ],
         salary_sum_for_all: [
           employees: %{
             "is_list" => true,
             "sql" =>
-            "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
+              "SELECT SUM(`company_db.employees.salary`) FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
@@ -585,7 +589,7 @@ defmodule DaoBasicQueriesMoreTest do
           works_with: %{
             "is_list" => false,
             "sql" =>
-            "SELECT SUM(`company_db.works_withs.total_sales`) FROM `company_db.works_withs` WHERE `company_db.works_withs.is_deleted` = 0 GROUP BY client_id"
+              "SELECT SUM(`company_db.works_withs.total_sales`) FROM `company_db.works_withs` WHERE `company_db.works_withs.is_deleted` = 0 GROUP BY client_id"
           }
         ],
         sales_per_employee: [

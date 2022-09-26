@@ -31,11 +31,18 @@ defmodule DaoEngine do
   end
 
   def execute(context, query_object) do
+    # first step is to check if the db in the context exists
+    translate_query(context, query_object)
+  end
+
+  def translate_query(context, query_object) do
     # query object have the following root keys
     # get
     # add
     # edit
     # delete
+
+    # we need to make sure that the database exists or create one
 
     # nyd: reverse auto_schema_changes list before executing its queries
     results = %{
@@ -78,6 +85,39 @@ defmodule DaoEngine do
           "UNKNOWN"
       end
     end)
+  end
+
+  @spec execute_real(any, any) :: any
+  def execute_real(context, query_object) do
+    # first step
+    # is to check if we need to reset the db specified in the context
+    context =
+      if Map.get(context, "reset_db", false) == true do
+        Database.gen_sql_for_reset_db(context)
+      else
+        context
+      end
+
+    # nyd: continue to next steps only if there are no errors so far
+    # second step
+    # is to check if the db in the context exists
+    context = Database.gen_sql_ensure_database_exists(context)
+    # third step
+    # is to convert the query to sql
+    gen_sql_res = translate_query(context, query_object)
+    # fourth step
+    # is execute the generated queries
+    # we need to first execute the auto schema changes
+    schema_change_results = Execute.auto_schema_changes(gen_sql_res)
+    # IO.inspect(schema_change_results)
+    # fifth step is executing the other sqls in the context "root_cmd_node_list"
+    root_cmd_results = Execute.root_cmd_sqls(schema_change_results)
+    IO.inspect(root_cmd_results)
+    # nyd: one of the final steps is to package the results of the queries
+
+    # myd: dealling with database seeding during the creation process
+    # nyd: auto schema changes if successfull will generate migrations
+    {schema_change_results, root_cmd_results}
   end
 
   @spec gen_sql_for_add(map(), keyword(), keyword()) :: map()

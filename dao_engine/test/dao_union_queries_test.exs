@@ -31,7 +31,7 @@ defmodule DaoUnionQueriesTest do
           dao@combine: %{
             "is_list" => true,
             "sql" =>
-            "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE `company_db.branches.is_deleted` = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0"
+              "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE `company_db.branches.is_deleted` = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0"
           }
         ]
       ]

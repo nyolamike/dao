@@ -744,7 +744,7 @@ defmodule Column do
 
   def sql_column_name(context, table_name, column_name) do
     plural_table_name = Inflex.pluralize(table_name)
-    "`#{context["database_name"]}.#{plural_table_name}.#{column_name}`"
+    "`#{plural_table_name}`.`#{column_name}`"
   end
 
   def process_foreign_keys(table_col_def, query_config) do

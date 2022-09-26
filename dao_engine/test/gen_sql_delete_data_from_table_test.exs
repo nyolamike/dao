@@ -43,7 +43,8 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
+              "sql" =>
+                "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -77,7 +78,8 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
+              "sql" =>
+                "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -111,7 +113,8 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
+              "sql" =>
+                "DELETE FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -187,7 +190,7 @@ defmodule GenSqlDeleteDataFromTableTest do
             students: %{
               "is_list" => true,
               "sql" =>
-              "DELETE FROM `grocerify.students`  WHERE ((`grocerify.students.name` = 'Tom') AND (`grocerify.students.major` = 'undecided')) AND `grocerify.students.is_deleted` = 0"
+                "DELETE FROM `grocerify.students`  WHERE ((`grocerify.students.name` = 'Tom') AND (`grocerify.students.major` = 'undecided')) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]

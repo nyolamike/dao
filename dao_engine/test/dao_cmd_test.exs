@@ -13,17 +13,19 @@ defmodule DaoCmdTest do
     # Dao.now()
     context = %{
       "database_type" => "mysql",
-      "database_name" => "grocerify",
+      "database_name" => "farmers_db",
       "schema" => %{},
       "auto_schema_changes" => [],
-      "auto_alter_db" => false,
-      "track_id" => "4664"
+      "auto_alter_db" => true,
+      "track_id" => "4664",
+      "reset_db" => true
     }
 
     query = [
       get: [
         improving_where: [
-          students: %{
+          farmers: %{
+            "name" => "str",
             "dao@where" => {
               {"id", ">", 5},
               "&",
@@ -34,7 +36,16 @@ defmodule DaoCmdTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
-    # IO.inspect(results["root_cmd_node_list"])
+    results = Dao.execute_real(context, query)
+    # IO.inspect(results)
+    # context = results["context"]
+    # sql =
+    #   results["root_cmd_node_list"]
+    #   |> Keyword.get(:get)
+    #   |> Keyword.get(:improving_where)
+    #   |> Keyword.get(:students)
+    #   |> Map.get("sql")
+    # res = MyXQL.query(:myxql, sql)
+    # IO.inspect(res)
   end
 end
