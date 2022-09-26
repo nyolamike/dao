@@ -51,7 +51,7 @@ defmodule SelectAutoCreateColsTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.employees` (emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(30), status VARCHAR(10) DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+          "CREATE TABLE `employees` (emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(30), status VARCHAR(10) DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -145,7 +145,7 @@ defmodule SelectAutoCreateColsTest do
             employees: %{
               "is_list" => true,
               "sql" =>
-                "SELECT `grocerify.employees.emp_id`, `grocerify.employees.first_name`, `grocerify.employees.last_name`, `grocerify.employees.status` FROM `grocerify.employees` WHERE `grocerify.employees.is_deleted` = 0"
+                "SELECT `employees`.`emp_id`, `employees`.`first_name`, `employees`.`last_name`, `employees`.`status` FROM `employees` WHERE `employees`.`is_deleted` = 0"
             }
           ]
         ]

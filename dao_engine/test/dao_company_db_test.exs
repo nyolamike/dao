@@ -38,7 +38,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))"
+          "CREATE TABLE `employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))"
         ],
         "database_name" => "company_db",
         "database_type" => "mysql",
@@ -232,7 +232,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)"
+          "CREATE TABLE `branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -506,7 +506,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "dao@skip: ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
+          "dao@skip: ALTER TABLE `employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -634,7 +634,7 @@ defmodule DaoCompanyDbTest do
             employee: %{
               "is_list" => false,
               "sql" =>
-                "ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
+                "ALTER TABLE `employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
             }
           ]
         ]
@@ -794,7 +794,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)"
+          "CREATE TABLE `clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -1156,7 +1156,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)"
+          "CREATE TABLE `works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -1575,7 +1575,7 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
+          "CREATE TABLE `branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -1910,12 +1910,12 @@ defmodule DaoCompanyDbTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))",
-          "CREATE TABLE `company_db.branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
-          "dao@skip: ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL",
-          "CREATE TABLE `company_db.clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
-          "CREATE TABLE `company_db.works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)",
-          "CREATE TABLE `company_db.branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
+          "CREATE TABLE `employees` (birth_day DATE, branch_id INT(30), emp_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, first_name VARCHAR(40), last_name VARCHAR(40), sex VARCHAR(1), super_id INT(30))",
+          "CREATE TABLE `branches` (branch_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, branch_name VARCHAR(40), mgr_id INT(30), mgr_start_date DATE, FOREIGN KEY(mgr_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
+          "dao@skip: ALTER TABLE `employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL",
+          "CREATE TABLE `clients` (branch_id INT(30), client_id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, client_name VARCHAR(44), ADD FOREIGN KEY(branch_id) REFERENCES employees(emp_id) ON DELETE SET NULL)",
+          "CREATE TABLE `works_withs` (client_id INT(30) NOT NULL, emp_id INT(30) NOT NULL, total_sales INT(30), PRIMARY KEY(emp_id, client_id), FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,FOREIGN KEY(emp_id) REFERENCES employees(emp_id) ON DELETE CASCADE)",
+          "CREATE TABLE `branch_suppliers` (branch_id INT(30) NOT NULL, supplier_name VARCHAR(40), supplier_type VARCHAR(40), PRIMARY KEY(branch_id, supplier_name), FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE CASCADE)"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -2161,7 +2161,7 @@ defmodule DaoCompanyDbTest do
             employee: %{
               "is_list" => false,
               "sql" =>
-                "ALTER TABLE `company_db.employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
+                "ALTER TABLE `employees` ADD FOREIGN KEY(branch_id) REFERENCES branches(branch_id) ON DELETE SET NULL, ADD FOREIGN KEY(super_id) REFERENCES employees(emp_id) ON DELETE SET NULL"
             }
           ],
           branches_table: [branch: %{"is_list" => false, "sql" => ""}],
@@ -2213,7 +2213,7 @@ defmodule DaoCompanyDbTest do
             employee: %{
               "is_list" => false,
               "sql" =>
-                "INSERT INTO `company_db.employees` VALUES('1961-05-11', 1, 101, 'Jan', 'Levinson', 110000, 'F', 100)"
+                "INSERT INTO `employees` VALUES('1961-05-11', 1, 101, 'Jan', 'Levinson', 110000, 'F', 100)"
             }
           ]
         ]
@@ -2224,7 +2224,7 @@ defmodule DaoCompanyDbTest do
            employee: %{
              "is_list" => false,
              "sql" =>
-               "UPDATE `company_db.employees` SET branch_id = 1 WHERE  WHERE (`company_db.employees.empl_id` = 100) AND `company_db.employees.is_deleted` = 0"
+               "UPDATE `employees` SET branch_id = 1 WHERE  WHERE (`employees`.`empl_id` = 100) AND `employees`.`is_deleted` = 0"
            }
          ]
        ]},
@@ -2234,14 +2234,14 @@ defmodule DaoCompanyDbTest do
            branch: %{
              "is_list" => false,
              "sql" =>
-               "INSERT INTO `company_db.branches` VALUES(1, 'Corporate', 100, '2006-02-09')"
+               "INSERT INTO `branches` VALUES(1, 'Corporate', 100, '2006-02-09')"
            }
          ],
          corporate_employee: [
            employee: %{
              "is_list" => false,
              "sql" =>
-               "INSERT INTO `company_db.employees` VALUES('1967-11-17', NULL, 100, 'David', 'Wallace', 250000, 'M', NULL)"
+               "INSERT INTO `employees` VALUES('1967-11-17', NULL, 100, 'David', 'Wallace', 250000, 'M', NULL)"
            }
          ]
        ]}
@@ -2303,7 +2303,7 @@ defmodule DaoCompanyDbTest do
           employee: %{
             "is_list" => false,
             "sql" =>
-              "INSERT INTO `company_db.employees` VALUES('1961-05-11', 1, 101, 'Jan', 'Levinson', 110000, 'F', 100), ('1971-06-25', 1, 103, 'Angela', 'Martin', 110000, 'F', 100), ('1980-02-05', 1, 104, 'Kelly', 'Kapoor', 110000, 'F', 100), ('1958-02-19', 1, 105, 'Stanley', 'Hudson', 110000, 'F', 100)"
+              "INSERT INTO `employees` VALUES('1961-05-11', 1, 101, 'Jan', 'Levinson', 110000, 'F', 100), ('1971-06-25', 1, 103, 'Angela', 'Martin', 110000, 'F', 100), ('1980-02-05', 1, 104, 'Kelly', 'Kapoor', 110000, 'F', 100), ('1958-02-19', 1, 105, 'Stanley', 'Hudson', 110000, 'F', 100)"
           }
         ]
       ],
@@ -2312,8 +2312,8 @@ defmodule DaoCompanyDbTest do
           employees: %{
             "is_list" => true,
             "sql" => [
-              "UPDATE `company_db.employees` SET branch_id = 1 WHERE  WHERE (`company_db.employees.empl_id` = 100) AND `company_db.employees.is_deleted` = 0",
-              "UPDATE `company_db.employees` SET branch_id = 2 WHERE  WHERE (`company_db.employees.empl_id` = 102) AND `company_db.employees.is_deleted` = 0"
+              "UPDATE `employees` SET branch_id = 1 WHERE  WHERE (`employees`.`empl_id` = 100) AND `employees`.`is_deleted` = 0",
+              "UPDATE `employees` SET branch_id = 2 WHERE  WHERE (`employees`.`empl_id` = 102) AND `employees`.`is_deleted` = 0"
             ]
           }
         ]
@@ -2322,14 +2322,14 @@ defmodule DaoCompanyDbTest do
         branches: [
           branch: %{
             "is_list" => false,
-            "sql" => "INSERT INTO `company_db.branches` VALUES(2, 'Scranton', 102, '1992-04-06')"
+            "sql" => "INSERT INTO `branches` VALUES(2, 'Scranton', 102, '1992-04-06')"
           }
         ],
         some_employees: [
           employees: %{
             "is_list" => true,
             "sql" =>
-              "INSERT INTO `company_db.employees` VALUES('1967-11-17', NULL, 100, 'David', 'Wallace', 250000, 'M', NULL), ('1964-03-15', NULL, 102, 'Micheal', 'Scott', 250000, 'M', NULL)"
+              "INSERT INTO `employees` VALUES('1967-11-17', NULL, 100, 'David', 'Wallace', 250000, 'M', NULL), ('1964-03-15', NULL, 102, 'Micheal', 'Scott', 250000, 'M', NULL)"
           }
         ]
       ]

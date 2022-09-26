@@ -89,7 +89,7 @@ defmodule GenSqlDropTableTest do
     %{
       "context" => %{
         "auto_alter_db" => true,
-        "auto_schema_changes" => ["dao@skip: DROP TABLE `grocerify.students`"],
+        "auto_schema_changes" => ["dao@skip: DROP TABLE `students`"],
         "database_name" => "grocerify",
         "database_type" => "mysql",
         "schema" => %{}
@@ -97,7 +97,7 @@ defmodule GenSqlDropTableTest do
       "root_cmd_node_list" => [
         delete: [
           students_table: [
-            students: %{"is_list" => true, "sql" => "DROP TABLE `grocerify.students`"}
+            students: %{"is_list" => true, "sql" => "DROP TABLE `students`"}
           ]
         ]
       ]
@@ -109,7 +109,7 @@ defmodule GenSqlDropTableTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "dao@skip: ALTER TABLE `grocerify.students` ADD gpa DECIMAL(3,2)"
+          "dao@skip: ALTER TABLE `students` ADD gpa DECIMAL(3,2)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -135,7 +135,7 @@ defmodule GenSqlDropTableTest do
           students_gender_col: [
             students: %{
               "is_list" => true,
-              "sql" => "ALTER TABLE `grocerify.students` ADD gpa DECIMAL(3,2)"
+              "sql" => "ALTER TABLE `students` ADD gpa DECIMAL(3,2)"
             }
           ]
         ]
@@ -147,7 +147,7 @@ defmodule GenSqlDropTableTest do
     %{
       "context" => %{
         "auto_alter_db" => true,
-        "auto_schema_changes" => ["dao@skip: ALTER TABLE `grocerify.students` DROP COLUMN gpa"],
+        "auto_schema_changes" => ["dao@skip: ALTER TABLE `students` DROP COLUMN gpa"],
         "database_name" => "grocerify",
         "database_type" => "mysql",
         "schema" => %{"students" => %{"name" => "string"}}
@@ -157,7 +157,7 @@ defmodule GenSqlDropTableTest do
           students_gpa_col: [
             students: %{
               "is_list" => true,
-              "sql" => "ALTER TABLE `grocerify.students` DROP COLUMN gpa"
+              "sql" => "ALTER TABLE `students` DROP COLUMN gpa"
             }
           ]
         ]

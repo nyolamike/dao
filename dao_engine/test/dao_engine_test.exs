@@ -81,7 +81,7 @@ defmodule DaoEngineTest do
             aircraft: %{
               "is_list" => false,
               "sql" =>
-                "SELECT * FROM `grocerify.aircraft` WHERE `grocerify.aircraft.is_deleted` = 0"
+                "SELECT * FROM `aircraft` WHERE `aircraft`.`is_deleted` = 0"
             }
           ]
         ],
@@ -89,7 +89,7 @@ defmodule DaoEngineTest do
           list_of_shops: [
             shops: %{
               "is_list" => true,
-              "sql" => "SELECT * FROM `grocerify.shops` WHERE `grocerify.shops.is_deleted` = 0"
+              "sql" => "SELECT * FROM `shops` WHERE `shops`.`is_deleted` = 0"
             }
           ]
         ]

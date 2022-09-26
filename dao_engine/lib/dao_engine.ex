@@ -112,12 +112,11 @@ defmodule DaoEngine do
     # IO.inspect(schema_change_results)
     # fifth step is executing the other sqls in the context "root_cmd_node_list"
     root_cmd_results = Execute.root_cmd_sqls(schema_change_results)
-    IO.inspect(root_cmd_results)
     # nyd: one of the final steps is to package the results of the queries
 
     # myd: dealling with database seeding during the creation process
     # nyd: auto schema changes if successfull will generate migrations
-    {schema_change_results, root_cmd_results}
+    root_cmd_results
   end
 
   @spec gen_sql_for_add(map(), keyword(), keyword()) :: map()

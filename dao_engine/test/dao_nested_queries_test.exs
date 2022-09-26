@@ -41,7 +41,7 @@ defmodule DaoNestedQueriesTest do
           employees: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.employees.first_name`, `company_db.employees.last_name` FROM `company_db.employees` WHERE (`company_db.employees.emp_id` IN (SELECT `company_db.works_withs.emp_id` FROM `company_db.works_withs` WHERE (`company_db.works_withs.total_sales` > 30000) AND `company_db.works_withs.is_deleted` = 0)) AND `company_db.employees.is_deleted` = 0"
+              "SELECT `employees`.`first_name`, `employees`.`last_name` FROM `employees` WHERE (`employees`.`emp_id` IN (SELECT `works_withs`.`emp_id` FROM `works_withs` WHERE (`works_withs`.`total_sales` > 30000) AND `works_withs`.`is_deleted` = 0)) AND `employees`.`is_deleted` = 0"
           }
         ]
       ]
@@ -88,7 +88,7 @@ defmodule DaoNestedQueriesTest do
           clients: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE (`company_db.clients.branch_id` = (SELECT `company_db.branches.branch_id` FROM `company_db.branches` WHERE (`company_db.branches.mgr_id` = 102) AND `company_db.branches.is_deleted` = 0 LIMIT 1)) AND `company_db.clients.is_deleted` = 0"
+              "SELECT `clients`.`client_name` FROM `clients` WHERE (`clients`.`branch_id` = (SELECT `branches`.`branch_id` FROM `branches` WHERE (`branches`.`mgr_id` = 102) AND `branches`.`is_deleted` = 0 LIMIT 1)) AND `clients`.`is_deleted` = 0"
           }
         ]
       ]

@@ -53,7 +53,7 @@ defmodule GenSqlRootCmdTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.shops` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+          "CREATE TABLE `shops` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -115,7 +115,7 @@ defmodule GenSqlRootCmdTest do
         list_of_shops: [
           shops: %{
             "is_list" => true,
-            "sql" => "SELECT * FROM `grocerify.shops` WHERE `grocerify.shops.is_deleted` = 0"
+            "sql" => "SELECT * FROM `shops` WHERE `shops`.`is_deleted` = 0"
           }
         ]
       ]
@@ -127,7 +127,7 @@ defmodule GenSqlRootCmdTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.aircraft` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+          "CREATE TABLE `aircraft` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -190,7 +190,7 @@ defmodule GenSqlRootCmdTest do
           aircraft: %{
             "is_list" => false,
             "sql" =>
-              "SELECT * FROM `grocerify.aircraft` WHERE `grocerify.aircraft.is_deleted` = 0"
+              "SELECT * FROM `aircraft` WHERE `aircraft`.`is_deleted` = 0"
           }
         ]
       ]

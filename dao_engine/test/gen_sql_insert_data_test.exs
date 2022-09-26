@@ -183,7 +183,7 @@ defmodule GenSqlInsertDataTest do
           new_student: [
             student: %{
               "is_list" => false,
-              "sql" => "INSERT INTO `company_book.students` VALUES(1, 'Jack', 'Biology')"
+              "sql" => "INSERT INTO `students` VALUES(1, 'Jack', 'Biology')"
             }
           ]
         ]
@@ -200,7 +200,7 @@ defmodule GenSqlInsertDataTest do
         "auto_alter_db" => true,
         "auto_alter_db_in_production" => false,
         "auto_schema_changes" => [
-          "ALTER TABLE `company_book.students` ADD col_4 INT(30), ADD col_5 TINYINT(1) NOT NULL DEFAULT 0, ADD col_6 VARCHAR(30), ADD col_7 DECIMAL(12,6)"
+          "ALTER TABLE `students` ADD col_4 INT(30), ADD col_5 TINYINT(1) NOT NULL DEFAULT 0, ADD col_6 VARCHAR(30), ADD col_7 DECIMAL(12,6)"
         ],
         "database_name" => "company_book",
         "database_type" => "mysql",
@@ -271,7 +271,7 @@ defmodule GenSqlInsertDataTest do
             student: %{
               "is_list" => false,
               "sql" =>
-                "INSERT INTO `company_book.students` VALUES(1, 'Jack', 'Biology', 45, true, 'success', 34.5)"
+                "INSERT INTO `students` VALUES(1, 'Jack', 'Biology', 45, true, 'success', 34.5)"
             }
           ]
         ]
@@ -315,7 +315,7 @@ defmodule GenSqlInsertDataTest do
           new_student: [
             student: %{
               "is_list" => false,
-              "sql" => "INSERT INTO `company_book.students`(name, student_id) VALUES('Kate', 1)"
+              "sql" => "INSERT INTO `students`(name, student_id) VALUES('Kate', 1)"
             }
           ]
         ]
@@ -332,7 +332,7 @@ defmodule GenSqlInsertDataTest do
         "auto_alter_db" => true,
         "auto_alter_db_in_production" => false,
         "auto_schema_changes" => [
-          "ALTER TABLE `company_book.students` ADD average DECIMAL(12,6), ADD is_ok TINYINT(1) NOT NULL DEFAULT 0, ADD nick_name VARCHAR(30), ADD position INT(30)"
+          "ALTER TABLE `students` ADD average DECIMAL(12,6), ADD is_ok TINYINT(1) NOT NULL DEFAULT 0, ADD nick_name VARCHAR(30), ADD position INT(30)"
         ],
         "database_name" => "company_book",
         "database_type" => "mysql",
@@ -403,7 +403,7 @@ defmodule GenSqlInsertDataTest do
             student: %{
               "is_list" => false,
               "sql" =>
-                "INSERT INTO `company_book.students`(average, is_ok, name, nick_name, position, student_id) VALUES(45.6, false, 'Kate', 'sample boy', 34, 1)"
+                "INSERT INTO `students`(average, is_ok, name, nick_name, position, student_id) VALUES(45.6, false, 'Kate', 'sample boy', 34, 1)"
             }
           ]
         ]
@@ -420,7 +420,7 @@ defmodule GenSqlInsertDataTest do
         "auto_alter_db" => true,
         "auto_alter_db_in_production" => false,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_book.students` (major VARCHAR(20) UNIQUE, name VARCHAR(20) NOT NULL, student_id INT(30), PRIMARY KEY(student_id))"
+          "CREATE TABLE `students` (major VARCHAR(20) UNIQUE, name VARCHAR(20) NOT NULL, student_id INT(30), PRIMARY KEY(student_id))"
         ],
         "database_name" => "company_book",
         "database_type" => "mysql",
@@ -483,7 +483,7 @@ defmodule GenSqlInsertDataTest do
         "auto_alter_db" => true,
         "auto_alter_db_in_production" => false,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_book.students` (major VARCHAR(20) DEFAULT 'undecided', name VARCHAR(20) NOT NULL, student_id INT(30) AUTO_INCREMENT, PRIMARY KEY(student_id))"
+          "CREATE TABLE `students` (major VARCHAR(20) DEFAULT 'undecided', name VARCHAR(20) NOT NULL, student_id INT(30) AUTO_INCREMENT, PRIMARY KEY(student_id))"
         ],
         "database_name" => "company_book",
         "database_type" => "mysql",

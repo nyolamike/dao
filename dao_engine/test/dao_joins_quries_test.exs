@@ -33,15 +33,15 @@ defmodule DaoJoinsQuriesTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `company_db.katwekas` (makida INT(30))",
-          "CREATE TABLE `company_db.bongos` (bongo_name VARCHAR(30))",
-          "CREATE TABLE `company_db.bananas` (branch_name VARCHAR(30))",
-          "ALTER TABLE `company_db.katwekas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-          "ALTER TABLE `company_db.bongos` ADD katweka_id INT(30) NOT NULL, ADD FOREIGN KEY(katweka_id) REFERENCES katwekas(id) ON DELETE SET CASCADE",
-          "ALTER TABLE `company_db.bongos` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-          "ALTER TABLE `company_db.bananas` ADD bongo_id INT(30) NOT NULL, ADD FOREIGN KEY(bongo_id) REFERENCES bongos(id) ON DELETE SET CASCADE",
-          "ALTER TABLE `company_db.bananas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-          "ALTER TABLE `company_db.employees` ADD banana_id INT(30) NOT NULL, ADD FOREIGN KEY(banana_id) REFERENCES bananas(id) ON DELETE SET CASCADE"
+          "CREATE TABLE `katwekas` (makida INT(30))",
+          "CREATE TABLE `bongos` (bongo_name VARCHAR(30))",
+          "CREATE TABLE `bananas` (branch_name VARCHAR(30))",
+          "ALTER TABLE `katwekas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `bongos` ADD katweka_id INT(30) NOT NULL, ADD FOREIGN KEY(katweka_id) REFERENCES katwekas(id) ON DELETE SET CASCADE",
+          "ALTER TABLE `bongos` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `bananas` ADD bongo_id INT(30) NOT NULL, ADD FOREIGN KEY(bongo_id) REFERENCES bongos(id) ON DELETE SET CASCADE",
+          "ALTER TABLE `bananas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `employees` ADD banana_id INT(30) NOT NULL, ADD FOREIGN KEY(banana_id) REFERENCES bananas(id) ON DELETE SET CASCADE"
         ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
@@ -394,7 +394,7 @@ defmodule DaoJoinsQuriesTest do
             employee: %{
               "is_list" => false,
               "sql" =>
-                "SELECT `company_db.bongos.bongo_name`, `company_db.katwekas.makida`, `company_db.bananas.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.katwekas` ON `company_db.bongos.katweka_id` = `company_db.katwekas.id` LEFT JOIN `company_db.bongos` ON `company_db.bananas.bongo_id` = `company_db.bongos.id` LEFT JOIN `company_db.bananas` ON `company_db.employees.banana_id` = `company_db.bananas.id` WHERE `company_db.employees.is_deleted` = 0"
+                "SELECT `bongos`.`bongo_name`, `katwekas`.`makida`, `bananas`.`branch_name`, `employees`.`emp_id`, `employees`.`first_name` FROM `employees` LEFT JOIN `katwekas` ON `bongos`.`katweka_id` = `katwekas`.`id` LEFT JOIN `bongos` ON `bananas`.`bongo_id` = `bongos`.`id` LEFT JOIN `bananas` ON `employees`.`banana_id` = `bananas`.`id` WHERE `employees`.`is_deleted` = 0"
             }
           ]
         ]
@@ -431,7 +431,7 @@ defmodule DaoJoinsQuriesTest do
           employee: %{
             "is_list" => false,
             "sql" =>
-              "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.branch_id` = `company_db.branches.branch_id` WHERE `company_db.employees.is_deleted` = 0"
+              "SELECT `branches`.`branch_name`, `employees`.`emp_id`, `employees`.`first_name` FROM `employees` LEFT JOIN `branches` ON `employees`.`branch_id` = `branches`.`branch_id` WHERE `employees`.`is_deleted` = 0"
           }
         ]
       ]
@@ -468,7 +468,7 @@ defmodule DaoJoinsQuriesTest do
           employees: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.emp_id` = `company_db.branches.mgr_id` WHERE `company_db.employees.is_deleted` = 0"
+              "SELECT `branches`.`branch_name`, `employees`.`emp_id`, `employees`.`first_name` FROM `employees` LEFT JOIN `branches` ON `employees`.`emp_id` = `branches`.`mgr_id` WHERE `employees`.`is_deleted` = 0"
           }
         ]
       ]

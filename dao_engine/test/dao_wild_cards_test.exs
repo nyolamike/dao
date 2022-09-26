@@ -29,7 +29,7 @@ defmodule DaoWildCardsTest do
           clients: %{
             "is_list" => true,
             "sql" =>
-              "SELECT * FROM `company_db.clients` WHERE (`company_db.clients.client_name` LIKE '%LLC') AND `company_db.clients.is_deleted` = 0"
+              "SELECT * FROM `clients` WHERE (`clients`.`client_name` LIKE '%LLC') AND `clients`.`is_deleted` = 0"
           }
         ]
       ]
@@ -65,7 +65,7 @@ defmodule DaoWildCardsTest do
           branch_supplier: %{
             "is_list" => false,
             "sql" =>
-              "SELECT * FROM `company_db.branch_suppliers` WHERE (`company_db.branch_suppliers.supplier_name` LIKE '% Label%') AND `company_db.branch_suppliers.is_deleted` = 0"
+              "SELECT * FROM `branch_suppliers` WHERE (`branch_suppliers`.`supplier_name` LIKE '% Label%') AND `branch_suppliers`.`is_deleted` = 0"
           }
         ]
       ]
@@ -101,7 +101,7 @@ defmodule DaoWildCardsTest do
           employee: %{
             "is_list" => false,
             "sql" =>
-              "SELECT * FROM `company_db.employees` WHERE (`company_db.employees.birth_date` LIKE '____-10%') AND `company_db.employees.is_deleted` = 0"
+              "SELECT * FROM `employees` WHERE (`employees`.`birth_date` LIKE '____-10%') AND `employees`.`is_deleted` = 0"
           }
         ]
       ]
@@ -137,7 +137,7 @@ defmodule DaoWildCardsTest do
           client: %{
             "is_list" => false,
             "sql" =>
-              "SELECT * FROM `company_db.clients` WHERE (`company_db.clients.client_name` LIKE '%school%') AND `company_db.clients.is_deleted` = 0"
+              "SELECT * FROM `clients` WHERE (`clients`.`client_name` LIKE '%school%') AND `clients`.`is_deleted` = 0"
           }
         ]
       ]

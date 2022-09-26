@@ -236,7 +236,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "CREATE TABLE `grocerify.students` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, major VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+          "CREATE TABLE `students` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, major VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -310,7 +310,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (`grocerify.students.major` = 'Biology') AND `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET major = 'Bio' WHERE  WHERE (`students`.`major` = 'Biology') AND `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -323,7 +323,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       "context" => %{
         "auto_alter_db" => true,
         "auto_schema_changes" => [
-          "ALTER TABLE `grocerify.students` ADD gpa DECIMAL(12,6), ADD major VARCHAR(30)"
+          "ALTER TABLE `students` ADD gpa DECIMAL(12,6), ADD major VARCHAR(30)"
         ],
         "database_name" => "grocerify",
         "database_type" => "mysql",
@@ -360,7 +360,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET gpa = 23.5, major = 'Bio', name = 'Muwanguzi' WHERE  WHERE (`grocerify.students.major` = 'Biology') AND `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET gpa = 23.5, major = 'Bio', name = 'Muwanguzi' WHERE  WHERE (`students`.`major` = 'Biology') AND `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -389,7 +389,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE ((`grocerify.students.major` = 'Biology') AND (`grocerify.students.gpa` = 50)) AND `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET major = 'Bio' WHERE  WHERE ((`students`.`major` = 'Biology') AND (`students`.`gpa` = 50)) AND `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -418,7 +418,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (((`grocerify.students.major` = 'Biology') AND (`grocerify.students.gpa` = 50)) OR (`grocerify.students.major` = 'Mathematics')) AND `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET major = 'Bio' WHERE  WHERE (((`students`.`major` = 'Biology') AND (`students`.`gpa` = 50)) OR (`students`.`major` = 'Mathematics')) AND `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -447,7 +447,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (major = 'Biology') AND `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET major = 'Bio' WHERE  WHERE (major = 'Biology') AND `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -476,7 +476,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE `grocerify.students.is_deleted` = 0"
+                "UPDATE `students` SET major = 'Bio' WHERE  WHERE `students`.`is_deleted` = 0"
             }
           ]
         ]
