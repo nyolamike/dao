@@ -2224,7 +2224,7 @@ defmodule DaoCompanyDbTest do
            employee: %{
              "is_list" => false,
              "sql" =>
-               "UPDATE `company_db.employees` SET branch_id = 1 WHERE (empl_id = 100) AND is_deleted = 0"
+              "UPDATE `company_db.employees` SET branch_id = 1 WHERE  WHERE (`company_db.employees.empl_id` = 100) AND `company_db.employees.is_deleted` = 0"
            }
          ]
        ]},
@@ -2312,8 +2312,8 @@ defmodule DaoCompanyDbTest do
           employees: %{
             "is_list" => true,
             "sql" => [
-              "UPDATE `company_db.employees` SET branch_id = 1 WHERE (empl_id = 100) AND is_deleted = 0",
-              "UPDATE `company_db.employees` SET branch_id = 2 WHERE (empl_id = 102) AND is_deleted = 0"
+              "UPDATE `company_db.employees` SET branch_id = 1 WHERE  WHERE (`company_db.employees.empl_id` = 100) AND `company_db.employees.is_deleted` = 0",
+              "UPDATE `company_db.employees` SET branch_id = 2 WHERE  WHERE (`company_db.employees.empl_id` = 102) AND `company_db.employees.is_deleted` = 0"
             ]
           }
         ]

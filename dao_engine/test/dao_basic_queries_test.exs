@@ -94,7 +94,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT `grocerify.students.gpa`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted = 0"
+                "SELECT `grocerify.students.gpa`, `grocerify.students.name` FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -143,7 +143,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT `grocerify.students.name`, `grocerify.students.gpa` FROM `grocerify.students` WHERE is_deleted = 0"
+                "SELECT `grocerify.students.name`, `grocerify.students.gpa` FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -194,8 +194,7 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY name"
+              "sql" => "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY name"
             }
           ]
         ]
@@ -247,7 +246,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY name ASC"
+              "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY name ASC"
             }
           ]
         ]
@@ -299,7 +298,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY name DESC"
+              "SELECT `grocerify.students.major`, `grocerify.students.name` FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY name DESC"
             }
           ]
         ]
@@ -348,7 +347,7 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "SELECT * FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY name"
+              "sql" => "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY name"
             }
           ]
         ]
@@ -398,7 +397,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT * FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY major, name"
+                "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY major, name"
             }
           ]
         ]
@@ -447,7 +446,7 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" => "SELECT * FROM `grocerify.students` WHERE is_deleted = 0 LIMIT 4"
+              "sql" => "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 LIMIT 4"
             }
           ]
         ]
@@ -503,7 +502,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT * FROM `grocerify.students` WHERE is_deleted = 0 ORDER BY student_id DESC LIMIT 4"
+                "SELECT * FROM `grocerify.students` WHERE `grocerify.students.is_deleted` = 0 ORDER BY student_id DESC LIMIT 4"
             }
           ]
         ]
@@ -560,7 +559,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT * FROM `grocerify.students` WHERE ((student_id <= 3) AND (name <> 'Jack')) AND is_deleted = 0"
+              "SELECT * FROM `grocerify.students` WHERE ((`grocerify.students.student_id` <= 3) AND (`grocerify.students.name` <> 'Jack')) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -613,7 +612,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT * FROM `grocerify.students` WHERE (name IN ('Clare', 'Kate', 'Mike')) AND is_deleted = 0"
+                "SELECT * FROM `grocerify.students` WHERE (`grocerify.students.name` IN ('Clare', 'Kate', 'Mike')) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -673,7 +672,7 @@ defmodule DaoBasicQueriesTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "SELECT * FROM `grocerify.students` WHERE ((name IN ('Clare', 'Kate', 'Mike')) AND (student_id > 2)) AND is_deleted = 0"
+              "SELECT * FROM `grocerify.students` WHERE ((`grocerify.students.name` IN ('Clare', 'Kate', 'Mike')) AND (`grocerify.students.student_id` > 2)) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]

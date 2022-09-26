@@ -31,7 +31,7 @@ defmodule DaoUnionQueriesTest do
           dao@combine: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE is_deleted = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE is_deleted = 0"
+            "SELECT `company_db.employees.first_name` AS Company_Names FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 UNION SELECT `company_db.branches.branch_name` FROM `company_db.branches` WHERE `company_db.branches.is_deleted` = 0 UNION SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0"
           }
         ]
       ]
@@ -67,7 +67,7 @@ defmodule DaoUnionQueriesTest do
           dao@combine: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.clients.branch_id`, `company_db.clients.client_name` FROM `company_db.clients` WHERE is_deleted = 0 UNION SELECT `company_db.branch_suppliers.supplier_name`, `company_db.branch_suppliers.branch_id` FROM `company_db.branch_suppliers` WHERE is_deleted = 0"
+              "SELECT `company_db.clients.branch_id`, `company_db.clients.client_name` FROM `company_db.clients` WHERE `company_db.clients.is_deleted` = 0 UNION SELECT `company_db.branch_suppliers.supplier_name`, `company_db.branch_suppliers.branch_id` FROM `company_db.branch_suppliers` WHERE `company_db.branch_suppliers.is_deleted` = 0"
           }
         ]
       ]
@@ -100,7 +100,7 @@ defmodule DaoUnionQueriesTest do
           dao@combine: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `company_db.employees.salary` FROM `company_db.employees` WHERE is_deleted = 0 UNION SELECT `company_db.works_withs.total_sales` FROM `company_db.works_withs` WHERE is_deleted = 0"
+              "SELECT `company_db.employees.salary` FROM `company_db.employees` WHERE `company_db.employees.is_deleted` = 0 UNION SELECT `company_db.works_withs.total_sales` FROM `company_db.works_withs` WHERE `company_db.works_withs.is_deleted` = 0"
           }
         ]
       ]

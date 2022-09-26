@@ -114,7 +114,7 @@ defmodule GenSqlGetFixtureTest do
       "fixture_list" => [
         shops: %{
           "is_list" => true,
-          "sql" => "SELECT * FROM `grocerify.shops` WHERE is_deleted = 0"
+          "sql" => "SELECT * FROM `grocerify.shops` WHERE `grocerify.shops.is_deleted` = 0"
         }
       ]
     }
@@ -186,7 +186,7 @@ defmodule GenSqlGetFixtureTest do
       "fixture_list" => [
         aircraft: %{
           "is_list" => false,
-          "sql" => "SELECT * FROM `grocerify.aircraft` WHERE is_deleted = 0"
+          "sql" => "SELECT * FROM `grocerify.aircraft` WHERE `grocerify.aircraft.is_deleted` = 0"
         }
       ]
     }

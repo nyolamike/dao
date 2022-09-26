@@ -338,23 +338,25 @@ defmodule DaoEngine do
         ""
       else
         sql = "SELECT"
-        %{"sql_acc" => specififc_cols_sql, "joins" => joins_list } =
+
+        %{"sql_acc" => specififc_cols_sql, "joins" => joins_list} =
           cond do
             is_list(query_config) ->
               # nyd: we expect that someone just provided a list of specific columns to be fecthed
               temp_res =
-              Enum.reduce(query_config, "", fn key, sql_acc ->
-                skip = Utils.skip_keys()
+                Enum.reduce(query_config, "", fn key, sql_acc ->
+                  skip = Utils.skip_keys()
 
-                if key in skip do
-                  sql_acc
-                else
-                  comma = if sql_acc == "", do: "", else: ", "
-                  column_name = Column.sql_column_name(context, str_node_name_key, key)
-                  "#{sql_acc}#{comma}#{column_name}"
-                end
-              end)
-              %{"sql_acc" => temp_res, "joins" => [] }
+                  if key in skip do
+                    sql_acc
+                  else
+                    comma = if sql_acc == "", do: "", else: ", "
+                    column_name = Column.sql_column_name(context, str_node_name_key, key)
+                    "#{sql_acc}#{comma}#{column_name}"
+                  end
+                end)
+
+              %{"sql_acc" => temp_res, "joins" => []}
 
             is_map(query_config) ->
               processed_query_config = Table.preprocess_query_config(context, query_config)
@@ -364,13 +366,19 @@ defmodule DaoEngine do
                 "joins" => []
               }
 
-              Enum.reduce(processed_query_config["columns"], cols_res_acc, fn {key, format_config}, %{ "sql_acc" => sql_acc, "joins" => joins_acc} ->
+              Enum.reduce(processed_query_config["columns"], cols_res_acc, fn {key, format_config},
+                                                                              %{
+                                                                                "sql_acc" =>
+                                                                                  sql_acc,
+                                                                                "joins" =>
+                                                                                  joins_acc
+                                                                              } ->
                 skip = Utils.skip_keys()
                 col_flags = Utils.col_flags()
 
                 cond do
                   key in skip && key in col_flags == false ->
-                    %{"sql_acc" => sql_acc, "joins" => joins_acc }
+                    %{"sql_acc" => sql_acc, "joins" => joins_acc}
 
                   key in skip && key in col_flags == true ->
                     # processable column flag
@@ -387,7 +395,8 @@ defmodule DaoEngine do
                           end)
 
                         temp_sql = "DISTINCT #{distinct_sql}"
-                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc}
+
                       key in ["dao@count"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -400,7 +409,8 @@ defmodule DaoEngine do
                           end)
 
                         temp_sql = "COUNT(#{distinct_sql})"
-                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc}
+
                       key in ["dao@average", "dao@avg"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -413,7 +423,8 @@ defmodule DaoEngine do
                           end)
 
                         temp_sql = "AVG(#{distinct_sql})"
-                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc}
+
                       key in ["dao@total", "dao@sum"] ->
                         distinct_sql =
                           Enum.reduce(format_config, "", fn column_name, acc_uniq ->
@@ -426,10 +437,11 @@ defmodule DaoEngine do
                           end)
 
                         temp_sql = "SUM(#{distinct_sql})"
-                        %{"sql_acc" => temp_sql, "joins" => joins_acc }
+                        %{"sql_acc" => temp_sql, "joins" => joins_acc}
+
                       true ->
                         # nyd: take care of other scenarios
-                        %{"sql_acc" => sql_acc, "joins" => joins_acc }
+                        %{"sql_acc" => sql_acc, "joins" => joins_acc}
                     end
 
                   true ->
@@ -448,18 +460,23 @@ defmodule DaoEngine do
                         )
 
                       {base_col_name, embed_col_name, join_type} =
-                        if is_map(format_config) && (Map.has_key?(format_config, "dao@link") || Map.has_key?(format_config, "dao@join")) do
+                        if is_map(format_config) &&
+                             (Map.has_key?(format_config, "dao@link") ||
+                                Map.has_key?(format_config, "dao@join")) do
                           join_conf =
-                          if Map.has_key?(format_config, "dao@link") do
-                            format_config["dao@link"]
-                          else
-                            format_config["dao@join"]
-                          end
+                            if Map.has_key?(format_config, "dao@link") do
+                              format_config["dao@link"]
+                            else
+                              format_config["dao@join"]
+                            end
+
                           case join_conf do
-                            {bcn, ecn} -> {bcn, ecn, "LEFT"}
+                            {bcn, ecn} ->
+                              {bcn, ecn, "LEFT"}
+
                             {bcn, ecn, jtype} ->
                               jtype = jtype |> String.trim() |> String.upcase()
-                              #OUTER is full outer join
+                              # OUTER is full outer join
                               if jtype in ["LEFT", "RIGHT", "OUTER", "INNER"] do
                                 {bcn, ecn, jtype}
                               else
@@ -471,30 +488,53 @@ defmodule DaoEngine do
                         end
 
                       sqlx = xresult["fixture_list"][join_table_key]["sql"]
-                      #example FROM employee JOIN branch ON employee.emp_id = branch.mgr_id
+                      # example FROM employee JOIN branch ON employee.emp_id = branch.mgr_id
                       join_plural_table_key = Inflex.pluralize(key)
-                      join_sql_table_name =  Table.sql_table_name(context, join_plural_table_key)
+                      join_sql_table_name = Table.sql_table_name(context, join_plural_table_key)
 
                       join_sql =
-                      if base_col_name != "" do
-                        #this means the linkage was explicitly scpecified {xx, yy}
-                        select_table_column_name = Table.sql_table_column_name(context, str_node_name_key, base_col_name)
-                        join_table_column_name = Table.sql_table_column_name(context, join_plural_table_key, embed_col_name)
-                        " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
-                      else
-                        str_node_plural_name_key = Inflex.pluralize(str_node_name_key)
-                        {fk_name, fk_col_config} = Column.get_foreign_key_config(context["schema"][str_node_plural_name_key], join_plural_table_key)
-                        select_table_column_name = Table.sql_table_column_name(context, str_node_name_key, fk_name)
-                        link_col_name = fk_col_config["on"]
-                        join_table_column_name = Table.sql_table_column_name(context, join_plural_table_key, link_col_name)
-                        " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
-                      end
+                        if base_col_name != "" do
+                          # this means the linkage was explicitly scpecified {xx, yy}
+                          select_table_column_name =
+                            Table.sql_table_column_name(context, str_node_name_key, base_col_name)
+
+                          join_table_column_name =
+                            Table.sql_table_column_name(
+                              context,
+                              join_plural_table_key,
+                              embed_col_name
+                            )
+
+                          " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
+                        else
+                          str_node_plural_name_key = Inflex.pluralize(str_node_name_key)
+
+                          {fk_name, fk_col_config} =
+                            Column.get_foreign_key_config(
+                              context["schema"][str_node_plural_name_key],
+                              join_plural_table_key
+                            )
+
+                          select_table_column_name =
+                            Table.sql_table_column_name(context, str_node_name_key, fk_name)
+
+                          link_col_name = fk_col_config["on"]
+
+                          join_table_column_name =
+                            Table.sql_table_column_name(
+                              context,
+                              join_plural_table_key,
+                              link_col_name
+                            )
+
+                          " #{join_type} JOIN #{join_sql_table_name} ON #{select_table_column_name} = #{join_table_column_name}"
+                        end
 
                       parent_sql = String.trim(sqlx["select"])
                       comma = if sql_acc == "", do: "", else: ", "
                       temp_sql = "#{sql_acc}#{comma}#{parent_sql}"
                       joins = sqlx["joins"] ++ [join_sql]
-                      %{"sql_acc" => temp_sql, "joins" => joins_acc ++ joins }
+                      %{"sql_acc" => temp_sql, "joins" => joins_acc ++ joins}
                     else
                       comma = if sql_acc == "", do: "", else: ", "
                       column_name = Column.sql_column_name(context, str_node_name_key, key)
@@ -526,19 +566,42 @@ defmodule DaoEngine do
           if is_map(query_config) do
             where_clause_config = Map.get(query_config, "dao@where")
 
-            where_sql = Operator.process_where_clause(context, query_config, where_clause_config)
+            where_sql =
+              Operator.process_where_clause(
+                context,
+                query_config,
+                where_clause_config,
+                str_node_name_key
+              )
+
             {context, where_sql} =
               case where_sql do
-                {cntx, sql} ->  {cntx, sql}
-                sql ->  {context, sql}
+                {cntx, sql} -> {cntx, sql}
+                sql -> {context, sql}
               end
 
             where_sql = String.trim(where_sql)
-            # this applies only if timestamps have not been turned off in the schema
-            and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
-            {context, " WHERE #{and_condition}is_deleted = 0"}
+            # this applies only if pseudo delete have not been turned off in the schema
+            where_sql =
+              if Map.get(context, "pseudo_delete", true) == true do
+                where_sql = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+                is_deleted = Table.sql_table_column_name(context, str_node_name_key, "is_deleted")
+                " WHERE #{where_sql}#{is_deleted} = 0"
+              else
+                where_sql
+              end
+
+            {context, where_sql}
           else
-            {context, " WHERE is_deleted = 0"}
+            where_sql =
+              if Map.get(context, "pseudo_delete", true) == true do
+                is_deleted = Table.sql_table_column_name(context, str_node_name_key, "is_deleted")
+                " WHERE #{is_deleted} = 0"
+              else
+                ""
+              end
+
+            {context, where_sql}
           end
 
         order_by_sql = OrderBy.gen_sql(context, query_config)
@@ -546,13 +609,13 @@ defmodule DaoEngine do
         pagination_sql = Pagination.gen_sql(context, query_config)
 
         joins_sql =
-        if length(joins_list) > 0 do
-          # IO.inspect(joins_list)
-          # jsql = " LEFT JOIN " <> Enum.join(joins_list, " LEFT JOIN ")
-          Enum.join(joins_list, "")
-        else
-          ""
-        end
+          if length(joins_list) > 0 do
+            # IO.inspect(joins_list)
+            # jsql = " LEFT JOIN " <> Enum.join(joins_list, " LEFT JOIN ")
+            Enum.join(joins_list, "")
+          else
+            ""
+          end
 
         select_table_name = Table.sql_table_name(result_acc["context"], str_node_name_key)
 
@@ -738,20 +801,32 @@ defmodule DaoEngine do
 
             where_clause_config = Map.get(query_config, "dao@where")
 
-            where_sql = Operator.process_where_clause(context, query_config, where_clause_config)
+            where_sql =
+              Operator.process_where_clause(
+                context,
+                query_config,
+                where_clause_config,
+                str_node_name_key
+              )
+
             {context, where_sql} =
               case where_sql do
-                {cntx, sql} ->  {cntx, sql}
-                sql ->  {context, sql}
+                {cntx, sql} -> {cntx, sql}
+                sql -> {context, sql}
               end
 
             where_sql = String.trim(where_sql)
-            # this applies only if timestamps have not been turned off in the schema
-            and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
-            default_where_clause = "#{and_condition}is_deleted = 0"
+            # this applies only if pseudo delete have not been turned off in the schema
+            where_sql =
+              if Map.get(context, "pseudo_delete", true) == true do
+                where_sql = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+                is_deleted = Table.sql_table_column_name(context, str_node_name_key, "is_deleted")
+                " WHERE #{where_sql}#{is_deleted} = 0"
+              else
+                where_sql
+              end
 
-            # nyd: throw an error if there are no set values
-            {context, "#{sql} SET #{gen_values_sql} WHERE #{default_where_clause}"}
+            {context, "#{sql} SET #{gen_values_sql} WHERE #{where_sql}"}
 
           true ->
             throw("Unknown query config: gen values sql in generating sqls for update fixture")
@@ -854,8 +929,16 @@ defmodule DaoEngine do
           # deleting data from a table
           sql = "DELETE FROM #{Table.sql_table_name(result_acc["context"], node_name_key)}"
 
-          # this applies only if timestamps have not been turned off in the schema
-          default_where_clause = " WHERE is_deleted = 0"
+          # this applies only if pseudo delete have not been turned off in the schema
+          default_where_clause =
+            if Map.get(result_acc["context"], "pseudo_delete", true) == true do
+              is_deleted =
+                Table.sql_table_column_name(result_acc["context"], node_name_key, "is_deleted")
+
+              " WHERE #{is_deleted} = 0"
+            else
+              ""
+            end
 
           fixture_config = %{
             "sql" => sql <> default_where_clause,
@@ -884,22 +967,38 @@ defmodule DaoEngine do
             end
 
           where_sql =
-            Operator.process_where_clause(result_acc["context"], query_config, where_config)
+            Operator.process_where_clause(
+              result_acc["context"],
+              query_config,
+              where_config,
+              node_name_key
+            )
 
           {where_context_changes, where_sql} =
-          case where_sql do
-            {cntx, sql} ->  {cntx, sql}
-            sql ->  {result_acc["context"], sql}
-          end
+            case where_sql do
+              {cntx, sql} -> {cntx, sql}
+              sql -> {result_acc["context"], sql}
+            end
+
           result_acc = Map.put(result_acc, "context", where_context_changes)
 
           where_sql = String.trim(where_sql)
-          # this applies only if timestamps have not been turned off in the schema
-          and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
-          default_where_clause = "#{and_condition}is_deleted = 0"
+
+          # this applies only if pseudo delete have not been turned off in the schema
+          where_sql =
+            if Map.get(result_acc["context"], "pseudo_delete", true) == true do
+              and_condition = if where_sql == "", do: "", else: "(#{where_sql}) AND "
+
+              is_deleted =
+                Table.sql_table_column_name(result_acc["context"], node_name_key, "is_deleted")
+
+              " WHERE #{and_condition}#{is_deleted} = 0"
+            else
+              ""
+            end
 
           fixture_config = %{
-            "sql" => "#{sql} WHERE #{default_where_clause}",
+            "sql" => "#{sql} #{where_sql}",
             "is_list" => true
           }
 
@@ -971,6 +1070,7 @@ defmodule DaoEngine do
       # add expected runtime keys
       project_config =
         project_config
+        |> Utils.ensure_key("pseudo_delete", true)
         |> Utils.ensure_key("auto_schema_changes", [])
         |> Utils.ensure_key("auto_allowed_names_queries_changes", [])
         |> Utils.ensure_key("migrations", [])
@@ -982,5 +1082,10 @@ defmodule DaoEngine do
         {:error, "Failed to read database configuration file for project:#{project_path_slug}",
          reason}
     end
+  end
+
+  def now() do
+    res = MyXQL.query!(:myxql, "SELECT NOW()").rows
+    IO.inspect(res)
   end
 end

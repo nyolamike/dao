@@ -32,15 +32,17 @@ defmodule DaoJoinsQuriesTest do
     expected_results = %{
       "context" => %{
         "auto_alter_db" => true,
-        "auto_schema_changes" => ["CREATE TABLE `company_db.katwekas` (makida INT(30))",
-         "CREATE TABLE `company_db.bongos` (bongo_name VARCHAR(30))",
-         "CREATE TABLE `company_db.bananas` (branch_name VARCHAR(30))",
-         "ALTER TABLE `company_db.katwekas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-         "ALTER TABLE `company_db.bongos` ADD katweka_id INT(30) NOT NULL, ADD FOREIGN KEY(katweka_id) REFERENCES katwekas(id) ON DELETE SET CASCADE",
-         "ALTER TABLE `company_db.bongos` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-         "ALTER TABLE `company_db.bananas` ADD bongo_id INT(30) NOT NULL, ADD FOREIGN KEY(bongo_id) REFERENCES bongos(id) ON DELETE SET CASCADE",
-         "ALTER TABLE `company_db.bananas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
-         "ALTER TABLE `company_db.employees` ADD banana_id INT(30) NOT NULL, ADD FOREIGN KEY(banana_id) REFERENCES bananas(id) ON DELETE SET CASCADE"],
+        "auto_schema_changes" => [
+          "CREATE TABLE `company_db.katwekas` (makida INT(30))",
+          "CREATE TABLE `company_db.bongos` (bongo_name VARCHAR(30))",
+          "CREATE TABLE `company_db.bananas` (branch_name VARCHAR(30))",
+          "ALTER TABLE `company_db.katwekas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `company_db.bongos` ADD katweka_id INT(30) NOT NULL, ADD FOREIGN KEY(katweka_id) REFERENCES katwekas(id) ON DELETE SET CASCADE",
+          "ALTER TABLE `company_db.bongos` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `company_db.bananas` ADD bongo_id INT(30) NOT NULL, ADD FOREIGN KEY(bongo_id) REFERENCES bongos(id) ON DELETE SET CASCADE",
+          "ALTER TABLE `company_db.bananas` ADD INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY",
+          "ALTER TABLE `company_db.employees` ADD banana_id INT(30) NOT NULL, ADD FOREIGN KEY(banana_id) REFERENCES bananas(id) ON DELETE SET CASCADE"
+        ],
         "dao@timestamps" => false,
         "dao@use_default_pk" => false,
         "database_name" => "company_db",
@@ -391,12 +393,14 @@ defmodule DaoJoinsQuriesTest do
           branches_with_managers: [
             employee: %{
               "is_list" => false,
-              "sql" => "SELECT `company_db.bongos.bongo_name`, `company_db.katwekas.makida`, `company_db.bananas.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.katwekas` ON `company_db.bongos.katweka_id` = `company_db.katwekas.id` LEFT JOIN `company_db.bongos` ON `company_db.bananas.bongo_id` = `company_db.bongos.id` LEFT JOIN `company_db.bananas` ON `company_db.employees.banana_id` = `company_db.bananas.id` WHERE is_deleted = 0"
+              "sql" =>
+                "SELECT `company_db.bongos.bongo_name`, `company_db.katwekas.makida`, `company_db.bananas.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.katwekas` ON `company_db.bongos.katweka_id` = `company_db.katwekas.id` LEFT JOIN `company_db.bongos` ON `company_db.bananas.bongo_id` = `company_db.bongos.id` LEFT JOIN `company_db.bananas` ON `company_db.employees.banana_id` = `company_db.bananas.id` WHERE `company_db.employees.is_deleted` = 0"
             }
           ]
         ]
       ]
     }
+
     assert expected_results == results
   end
 
@@ -420,16 +424,19 @@ defmodule DaoJoinsQuriesTest do
     results = Dao.execute(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
+
     expected_results = [
       get: [
         branches_with_managers: [
           employee: %{
             "is_list" => false,
-            "sql" => "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.branch_id` = `company_db.branches.branch_id` WHERE is_deleted = 0"
+            "sql" =>
+              "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.branch_id` = `company_db.branches.branch_id` WHERE `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
     ]
+
     assert expected_results == cmd_results
   end
 
@@ -444,7 +451,7 @@ defmodule DaoJoinsQuriesTest do
             "first_name" => "string",
             "branch" => %{
               "branch_name" => "str",
-              "dao@link" => {"emp_id", "mgr_id"},
+              "dao@link" => {"emp_id", "mgr_id"}
             }
           }
         ]
@@ -454,16 +461,19 @@ defmodule DaoJoinsQuriesTest do
     results = Dao.execute(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
+
     expected_results = [
       get: [
         branches_with_managers: [
           employees: %{
             "is_list" => true,
-            "sql" => "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.emp_id` = `company_db.branches.mgr_id` WHERE is_deleted = 0"
+            "sql" =>
+              "SELECT `company_db.branches.branch_name`, `company_db.employees.emp_id`, `company_db.employees.first_name` FROM `company_db.employees` LEFT JOIN `company_db.branches` ON `company_db.employees.emp_id` = `company_db.branches.mgr_id` WHERE `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
     ]
+
     assert expected_results == cmd_results
   end
 

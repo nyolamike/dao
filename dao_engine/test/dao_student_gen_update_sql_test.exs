@@ -310,7 +310,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE (major = 'Biology') AND is_deleted = 0"
+                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (`grocerify.students.major` = 'Biology') AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -360,7 +360,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET gpa = 23.5, major = 'Bio', name = 'Muwanguzi' WHERE (major = 'Biology') AND is_deleted = 0"
+                "UPDATE `grocerify.students` SET gpa = 23.5, major = 'Bio', name = 'Muwanguzi' WHERE  WHERE (`grocerify.students.major` = 'Biology') AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -389,7 +389,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE ((major = 'Biology') AND (gpa = 50)) AND is_deleted = 0"
+                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE ((`grocerify.students.major` = 'Biology') AND (`grocerify.students.gpa` = 50)) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -418,7 +418,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE (((major = 'Biology') AND (gpa = 50)) OR (major = 'Mathematics')) AND is_deleted = 0"
+                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (((`grocerify.students.major` = 'Biology') AND (`grocerify.students.gpa` = 50)) OR (`grocerify.students.major` = 'Mathematics')) AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -447,7 +447,7 @@ defmodule DaoStudentGenUpdateSqlTest do
             students: %{
               "is_list" => true,
               "sql" =>
-                "UPDATE `grocerify.students` SET major = 'Bio' WHERE (major = 'Biology') AND is_deleted = 0"
+                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE (major = 'Biology') AND `grocerify.students.is_deleted` = 0"
             }
           ]
         ]
@@ -475,7 +475,8 @@ defmodule DaoStudentGenUpdateSqlTest do
           students_major: [
             students: %{
               "is_list" => true,
-              "sql" => "UPDATE `grocerify.students` SET major = 'Bio' WHERE is_deleted = 0"
+              "sql" =>
+                "UPDATE `grocerify.students` SET major = 'Bio' WHERE  WHERE `grocerify.students.is_deleted` = 0"
             }
           ]
         ]

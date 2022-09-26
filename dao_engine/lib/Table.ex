@@ -97,7 +97,7 @@ defmodule Table do
               Column.is_propbably_ajoin_term(column_config) && column_name_key in skips == false
 
             if is_propbably_ajoin_term do
-              #nyd: clean up variable names and comments
+              # nyd: clean up variable names and comments
               # Utils.log("lumonde", column_config)
 
               foo =
@@ -719,7 +719,7 @@ defmodule Table do
         recur_context = Map.put(recur_context, "auto_schema_changes", auto_schema_changes)
         {recur_context}
       else
-        #Utils.log("key_in_table_schema", table_schema)
+        # Utils.log("key_in_table_schema", table_schema)
         {recur_context}
       end
 

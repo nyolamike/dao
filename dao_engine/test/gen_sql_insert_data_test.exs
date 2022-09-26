@@ -175,7 +175,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [
@@ -261,7 +262,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [
@@ -305,7 +307,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [
@@ -391,7 +394,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [
@@ -461,7 +465,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [def_table: [student: %{"is_list" => false, "sql" => ""}]]
@@ -523,7 +528,8 @@ defmodule GenSqlInsertDataTest do
         "schema_timestamps" => true,
         "seeds" => [],
         "sudo_delete" => false,
-        "transactional" => true
+        "transactional" => true,
+        "pseudo_delete" => true
       },
       "root_cmd_node_list" => [
         add: [def_table: [student: %{"is_list" => false, "sql" => ""}]]

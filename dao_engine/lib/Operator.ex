@@ -125,51 +125,63 @@ defmodule Operator do
     end
   end
 
-  def process_where_clause(_context, _query_config, nil), do: ""
+  def process_where_clause(_context, _query_config, nil, _str_node_name_key), do: ""
 
-  def process_where_clause(context, query_config, [left, operator, right]) do
-    process_where_clause(context, query_config, {left, operator, right})
+  def process_where_clause(context, query_config, [left, operator, right], str_node_name_key) do
+    process_where_clause(context, query_config, {left, operator, right}, str_node_name_key)
   end
 
-  def process_where_clause(_context, _query_config, where_sql) when is_binary(where_sql),
-    do: where_sql
+  def process_where_clause(_context, _query_config, where_sql, _str_node_name_key)
+      when is_binary(where_sql),
+      do: where_sql
 
-  def process_where_clause(context, query_config, {left, operator, right}) do
+  def process_where_clause(context, query_config, {left, operator, right}, str_node_name_key) do
     operator_sql = Operator.parse(operator)
     preped_operator_sql = Operator.get_possible_operator(context, operator_sql)
 
     cond do
       is_tuple(left) == false && is_tuple(right) == false ->
-        left_side = left
+        left_side = Table.sql_table_column_name(context, str_node_name_key, left)
+        # if Map.get(context, "track_id") == "4664" do
+        #   IO.inspect(query_config)
+        #   left_side = Table.sql_table_column_name(context, str_node_name_key, left_side)
+        #   IO.inspect(left_side)
+        # end
         possible_value = get_possible_value(context, operator_sql, right)
+
         case possible_value do
           {cntxt, pv} -> {cntxt, "#{left_side} #{preped_operator_sql} #{pv}"}
-          pv -> {context , "#{left_side} #{preped_operator_sql} #{pv}"}
+          pv -> {context, "#{left_side} #{preped_operator_sql} #{pv}"}
         end
 
       is_tuple(left) == false && is_tuple(right) == true ->
-        right_side = process_where_clause(context, query_config, right)
+        right_side = process_where_clause(context, query_config, right, str_node_name_key)
+
         case right_side do
           {cntxt, rs} -> {cntxt, "(#{left}) #{preped_operator_sql} #{rs}"}
           rs -> {context, "(#{left}) #{preped_operator_sql} #{rs}"}
         end
 
       is_tuple(left) == true && is_tuple(right) == false ->
-        left_side = process_where_clause(context, query_config, right)
+        left_side = process_where_clause(context, query_config, right, str_node_name_key)
         possible_value = Column.sql_value_format(right)
+
         case left_side do
           {cntxt, ls} -> {cntxt, "#{ls} #{preped_operator_sql} (#{possible_value})"}
           ls -> {context, "#{ls} #{preped_operator_sql} (#{possible_value})"}
         end
 
       is_tuple(left) == true && is_tuple(right) == true ->
-        right_side = process_where_clause(context, query_config, right)
+        right_side = process_where_clause(context, query_config, right, str_node_name_key)
+
         {context, right_side} =
           case right_side do
             {cntxt, rs} -> {cntxt, rs}
             rs -> {context, rs}
           end
-        left_side = process_where_clause(context, query_config, left)
+
+        left_side = process_where_clause(context, query_config, left, str_node_name_key)
+
         {context, left_side} =
           case left_side do
             {cntxt, ls} -> {cntxt, ls}
@@ -187,7 +199,7 @@ defmodule Operator do
         cond do
           is_list(right) ->
             if Keyword.keyword?(right) do
-              #is probably a nested value scenario
+              # is probably a nested value scenario
               value_format(context, right)
             else
               # its a list of possible values
@@ -200,6 +212,7 @@ defmodule Operator do
 
               "(#{temp_sql})"
             end
+
           is_binary(right) ->
             # a string
             # in future this has to be scanned for security reasons and proper formating
@@ -234,10 +247,10 @@ defmodule Operator do
 
   def value_format(context, value) do
     if is_list(value) && Keyword.keyword?(value) do
-      #this is probaly a nested query scenario
+      # this is probaly a nested query scenario
       nested_query_res = DaoEngine.gen_sql_for_get_fixture(context, [], value)
       context_res = nested_query_res["context"]
-      {_table_key, %{"sql"=>nested_sql}} = nested_query_res["fixture_list"] |> hd()
+      {_table_key, %{"sql" => nested_sql}} = nested_query_res["fixture_list"] |> hd()
       {context_res, "(#{nested_sql})"}
     else
       Column.sql_value_format(value)

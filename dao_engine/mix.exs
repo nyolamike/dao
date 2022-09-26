@@ -14,6 +14,7 @@ defmodule DaoEngine.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {DaoEngine.Application, []},
       extra_applications: [:logger]
     ]
   end
@@ -23,7 +24,8 @@ defmodule DaoEngine.MixProject do
     [
       {:inflex, "~> 2.0.0"},
       {:dotenv_parser, "~> 2.0"},
-      {:jason, "~> 1.3"}
+      {:jason, "~> 1.3"},
+      {:myxql, "~> 0.6.0"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]

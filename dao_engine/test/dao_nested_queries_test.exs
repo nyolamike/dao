@@ -13,11 +13,15 @@ defmodule DaoNestedQueriesTest do
             "first_name" => "str",
             "last_name" => "str",
             "dao@where" => {
-              "emp_id", "is in", [
+              "emp_id",
+              "is in",
+              [
                 works_withs: %{
                   "emp_id" => true,
                   "dao@where" => {
-                    "total_sales", ">", 30_000
+                    "total_sales",
+                    ">",
+                    30_000
                   }
                 }
               ]
@@ -30,16 +34,19 @@ defmodule DaoNestedQueriesTest do
     results = Dao.execute(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
+
     expected_results = [
       get: [
         high_performers: [
           employees: %{
             "is_list" => true,
-            "sql" => "SELECT `company_db.employees.first_name`, `company_db.employees.last_name` FROM `company_db.employees` WHERE (emp_id IN (SELECT `company_db.works_withs.emp_id` FROM `company_db.works_withs` WHERE (total_sales > 30000) AND is_deleted = 0)) AND is_deleted = 0"
+            "sql" =>
+              "SELECT `company_db.employees.first_name`, `company_db.employees.last_name` FROM `company_db.employees` WHERE (`company_db.employees.emp_id` IN (SELECT `company_db.works_withs.emp_id` FROM `company_db.works_withs` WHERE (`company_db.works_withs.total_sales` > 30000) AND `company_db.works_withs.is_deleted` = 0)) AND `company_db.employees.is_deleted` = 0"
           }
         ]
       ]
     ]
+
     assert expected_results == cmd_results
   end
 
@@ -52,11 +59,15 @@ defmodule DaoNestedQueriesTest do
           clients: %{
             "client_name" => "str",
             "dao@where" => {
-              "branch_id", "=", [
+              "branch_id",
+              "=",
+              [
                 branch: %{
                   "branch_id" => "int",
                   "dao@where" => {
-                    "mgr_id", "=", 102
+                    "mgr_id",
+                    "=",
+                    102
                   },
                   "dao@size" => 1
                 }
@@ -70,16 +81,19 @@ defmodule DaoNestedQueriesTest do
     results = Dao.execute(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
+
     expected_results = [
       get: [
         managed_clients: [
           clients: %{
             "is_list" => true,
-            "sql" => "SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE (branch_id = (SELECT `company_db.branches.branch_id` FROM `company_db.branches` WHERE (mgr_id = 102) AND is_deleted = 0 LIMIT 1)) AND is_deleted = 0"
+            "sql" =>
+              "SELECT `company_db.clients.client_name` FROM `company_db.clients` WHERE (`company_db.clients.branch_id` = (SELECT `company_db.branches.branch_id` FROM `company_db.branches` WHERE (`company_db.branches.mgr_id` = 102) AND `company_db.branches.is_deleted` = 0 LIMIT 1)) AND `company_db.clients.is_deleted` = 0"
           }
         ]
       ]
     ]
+
     assert expected_results == cmd_results
   end
 
