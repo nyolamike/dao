@@ -26,7 +26,7 @@ defmodule DaoJoinsQuriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
 
     expected_results = %{
@@ -421,7 +421,7 @@ defmodule DaoJoinsQuriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
 
@@ -458,7 +458,7 @@ defmodule DaoJoinsQuriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     %{"context" => results_context, "root_cmd_node_list" => cmd_results} = results
     assert results_context == context
 

@@ -28,7 +28,7 @@ defmodule GenSqlDropTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = get_expected_results()
 
     assert expected_results == results
@@ -56,7 +56,7 @@ defmodule GenSqlDropTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     epected_results = get_expected_results_gpa()
     assert epected_results == results
   end
@@ -80,7 +80,7 @@ defmodule GenSqlDropTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = get_expected_results_delete_gpa()
     assert expected_results == results
   end
@@ -202,7 +202,7 @@ defmodule GenSqlDropTableTest do
     # #   ]
     # # ]
 
-    # results = Dao.execute(context, query)
+    # results = Dao.translate_query(context, query)
     # IO.inspect(results)
   end
 end

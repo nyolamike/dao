@@ -32,7 +32,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -226,7 +226,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -500,7 +500,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -788,7 +788,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -1150,7 +1150,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -1569,7 +1569,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -1904,7 +1904,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -2203,7 +2203,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    %{"root_cmd_node_list" => results} = Dao.execute(context, query)
+    %{"root_cmd_node_list" => results} = Dao.translate_query(context, query)
 
     expected_results = [
       {
@@ -2294,7 +2294,7 @@ defmodule DaoCompanyDbTest do
       ]
     ]
 
-    %{"root_cmd_node_list" => results} = Dao.execute(context, query)
+    %{"root_cmd_node_list" => results} = Dao.translate_query(context, query)
 
     expected_results = [
       add: [

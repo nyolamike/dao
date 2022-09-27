@@ -28,7 +28,7 @@ defmodule GenSqlDeleteDataFromTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected = %{
       "context" => %{
@@ -62,7 +62,7 @@ defmodule GenSqlDeleteDataFromTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected = %{
       "context" => %{
@@ -96,7 +96,7 @@ defmodule GenSqlDeleteDataFromTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected = %{
       "context" => %{
@@ -130,7 +130,7 @@ defmodule GenSqlDeleteDataFromTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected = %{
       "context" => %{
@@ -171,7 +171,7 @@ defmodule GenSqlDeleteDataFromTableTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected = %{
       "context" => %{

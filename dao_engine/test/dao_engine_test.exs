@@ -65,7 +65,7 @@ defmodule DaoEngineTest do
       get: aircraft_get_cmd_node
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{

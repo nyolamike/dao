@@ -35,7 +35,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = get_expected_results()
     assert expected_results == results
   end
@@ -56,7 +56,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results_missing_cols = get_expected_results_missing_cols()
     assert expected_results_missing_cols == results
   end
@@ -91,7 +91,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_single_and_condition = get_expected_results_single_and_condition()
     assert expected_single_and_condition == results
   end
@@ -130,7 +130,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = get_epected_results_or()
     assert expected_results == results
   end
@@ -161,7 +161,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expexted_results_str = get_expected_results_where_string()
     assert expexted_results_str == results
   end
@@ -191,7 +191,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     assert get_expected_results_no_where_clause() == results
   end
 
@@ -226,7 +226,7 @@ defmodule DaoStudentGenUpdateSqlTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     # nyd: this query must should show multiple queries generated or is it that the last operation will be the results but i think the track record of all queries must be availble
   end

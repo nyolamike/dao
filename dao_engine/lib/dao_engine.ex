@@ -30,10 +30,6 @@ defmodule DaoEngine do
     :world
   end
 
-  def execute(context, query_object) do
-    # first step is to check if the db in the context exists
-    translate_query(context, query_object)
-  end
 
   def translate_query(context, query_object) do
     # query object have the following root keys
@@ -87,8 +83,8 @@ defmodule DaoEngine do
     end)
   end
 
-  @spec execute_real(any, any) :: any
-  def execute_real(context, query_object) do
+  @spec execute(any, any) :: any
+  def execute(context, query_object) do
     # first step
     # is to check if we need to reset the db specified in the context
     context =

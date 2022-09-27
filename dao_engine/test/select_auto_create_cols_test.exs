@@ -40,7 +40,7 @@ defmodule SelectAutoCreateColsTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = get_expected_results()
 
     assert expected_results == results

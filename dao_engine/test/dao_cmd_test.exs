@@ -37,7 +37,7 @@ defmodule DaoCmdTest do
       ]
     ]
 
-    results = Dao.execute_real(context, query)
+    results = Dao.execute(context, query)
     assert expected_context() == results["context"]
     assert expected_auto_schama_results() == results["auto_schema_changes_results"]
     assert expected_root_cmd_results() == results["root_cmd_sqls_results"]

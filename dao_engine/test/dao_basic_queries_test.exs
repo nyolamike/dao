@@ -28,7 +28,7 @@ defmodule DaoBasicQueriesTest do
     #   ]
     # ]
 
-    # results = Dao.execute(context, query)
+    # results = Dao.translate_query(context, query)
     # expected_results = %{
     #   "context" => {%{
     #      "auto_alter_db" => true,
@@ -64,7 +64,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_res = %{
       "context" => %{
@@ -113,7 +113,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_res = %{
       "context" => %{
@@ -179,7 +179,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -231,7 +231,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -283,7 +283,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -333,7 +333,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -382,7 +382,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -432,7 +432,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -485,7 +485,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -542,7 +542,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -595,7 +595,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{
@@ -655,7 +655,7 @@ defmodule DaoBasicQueriesTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
 
     expected_results = %{
       "context" => %{

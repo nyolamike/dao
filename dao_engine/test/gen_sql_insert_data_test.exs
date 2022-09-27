@@ -23,7 +23,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expected_results()
     assert expected_results == results
   end
@@ -37,7 +37,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expected_results_missing_cols()
     assert expected_results == results
   end
@@ -54,7 +54,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expected_named_coloumns()
     assert expected_results == results
   end
@@ -75,7 +75,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expectd_names_missing_cols()
     assert expected_results == results
   end
@@ -107,7 +107,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expected_results_unique_constrain()
     assert expected_results == results
   end
@@ -142,7 +142,7 @@ defmodule GenSqlInsertDataTest do
       ]
     ]
 
-    results = Dao.execute(context, query)
+    results = Dao.translate_query(context, query)
     expected_results = expected_results_auto_increment()
     assert expected_results == results
   end
