@@ -18,7 +18,8 @@ defmodule DaoCmdTest do
       "auto_schema_changes" => [],
       "auto_alter_db" => true,
       "track_id" => "4664",
-      "reset_db" => true
+      "reset_db" => true,
+      "remove_sql_results_connection_ids" => true
     }
 
     query = [
@@ -38,20 +39,19 @@ defmodule DaoCmdTest do
 
     results = Dao.execute_real(context, query)
     assert expected_context() == results["context"]
-    # assert expected_auto_schama_results(conn_id) == results["index_ref_results"]
-    assert 3 == results["next_index"]
-    # assert expected_root_cmd_results() == results["root_cmd_node_results_list"]
+    assert expected_auto_schama_results() == results["auto_schema_changes_results"]
+    assert expected_root_cmd_results() == results["root_cmd_sqls_results"]
     assert expected_node_list() == results["root_cmd_node_list"]
-    assert %{} == results["errors"]
-    assert false == results["has_errors"]
   end
 
   defp expected_context() do
     %{
       "auto_alter_db" => true,
-      "auto_schema_changes" => ["DROP DATABASE farmers_db",
-       "CREATE DATABASE IF NOT EXISTS farmers_db",
-       "CREATE TABLE `farmers` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, name VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"],
+      "auto_schema_changes" => [
+        "DROP DATABASE farmers_db",
+        "CREATE DATABASE IF NOT EXISTS farmers_db",
+        "CREATE TABLE `farmers` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, name VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+      ],
       "database_name" => "farmers_db",
       "database_type" => "mysql",
       "reset_db" => true,
@@ -118,70 +118,89 @@ defmodule DaoCmdTest do
           }
         }
       },
-      "track_id" => "4664"
+      "track_id" => "4664",
+      "remove_sql_results_connection_ids" => true
     }
   end
 
   defp expected_auto_schama_results() do
     %{
-      0 => %{
-        "results" => {:ok,
-         %MyXQL.Result{
-           columns: nil,
-           connection_id: 334,
-           last_insert_id: 0,
-           num_rows: 1,
-           num_warnings: 0,
-           rows: nil
-         }},
-        "sql" => "DROP DATABASE farmers_db"
+      "errors" => %{},
+      "has_errors" => false,
+      "index_ref_results" => %{
+        0 => %{
+          "results" => {
+            :ok,
+            %MyXQL.Result{
+              columns: nil,
+              connection_id: :dao@removed,
+              last_insert_id: 0,
+              num_rows: 1,
+              num_warnings: 0,
+              rows: nil
+            }
+          },
+          "sql" => "DROP DATABASE farmers_db"
+        },
+        1 => %{
+          "results" => {
+            :ok,
+            %MyXQL.Result{
+              columns: nil,
+              connection_id: :dao@removed,
+              last_insert_id: 0,
+              num_rows: 1,
+              num_warnings: 0,
+              rows: nil
+            }
+          },
+          "sql" => "CREATE DATABASE IF NOT EXISTS farmers_db"
+        },
+        2 => %{
+          "results" => {
+            :ok,
+            %MyXQL.Result{
+              columns: nil,
+              connection_id: :dao@removed,
+              last_insert_id: 0,
+              num_rows: 0,
+              num_warnings: 0,
+              rows: nil
+            }
+          },
+          "sql" =>
+            "CREATE TABLE `farmers` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, name VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
+        }
       },
-      1 => %{
-        "results" => {:ok,
-         %MyXQL.Result{
-           columns: nil,
-           connection_id: 334,
-           last_insert_id: 0,
-           num_rows: 1,
-           num_warnings: 0,
-           rows: nil
-         }},
-        "sql" => "CREATE DATABASE IF NOT EXISTS farmers_db"
-      },
-      2 => %{
-        "results" => {:ok,
-         %MyXQL.Result{
-           columns: nil,
-           connection_id: 335,
-           last_insert_id: 0,
-           num_rows: 0,
-           num_warnings: 0,
-           rows: nil
-         }},
-        "sql" => "CREATE TABLE `farmers` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, name VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
-      }
+      "next_index" => 3
     }
   end
 
   def expected_root_cmd_results() do
-    [
-      get: [
-        improving_where: [
-          farmers: %{
-            "results" => {:ok,
-             %MyXQL.Result{
-               columns: ["name"],
-               connection_id: 335,
-               last_insert_id: nil,
-               num_rows: 0,
-               num_warnings: 0,
-               rows: []
-             }},
-            "sql" => "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
-          }
+    %{
+      "errors" => %{},
+      "has_errors" => false,
+      "results" => [
+        get: [
+          improving_where: [
+            farmers: %{
+              "results" =>
+                {:ok,
+                 %MyXQL.Result{
+                   columns: ["name"],
+                   connection_id: :dao@removed,
+                   last_insert_id: nil,
+                   num_rows: 0,
+                   num_warnings: 0,
+                   rows: []
+                 }},
+              "sql" =>
+                "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
+            }
+          ]
         ]
       ]
-    ]
+    }
   end
 
   def expected_node_list() do
@@ -190,7 +209,8 @@ defmodule DaoCmdTest do
         improving_where: [
           farmers: %{
             "is_list" => true,
-            "sql" => "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
+            "sql" =>
+              "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
           }
         ]
       ]

@@ -52,8 +52,7 @@ defmodule DaoBasicQueriesMoreTest do
             },
             students: %{
               "is_list" => true,
-              "sql" =>
-                "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0"
+              "sql" => "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -82,8 +81,7 @@ defmodule DaoBasicQueriesMoreTest do
         all_employees: [
           employees: %{
             "is_list" => true,
-            "sql" =>
-              "SELECT * FROM `employees` WHERE `employees`.`is_deleted` = 0"
+            "sql" => "SELECT * FROM `employees` WHERE `employees`.`is_deleted` = 0"
           }
         ]
       ]
@@ -112,8 +110,7 @@ defmodule DaoBasicQueriesMoreTest do
         all_clients: [
           clients: %{
             "is_list" => true,
-            "sql" =>
-              "SELECT * FROM `clients` WHERE `clients`.`is_deleted` = 0"
+            "sql" => "SELECT * FROM `clients` WHERE `clients`.`is_deleted` = 0"
           }
         ]
       ]
@@ -224,8 +221,7 @@ defmodule DaoBasicQueriesMoreTest do
         first_5_employees: [
           employees: %{
             "is_list" => true,
-            "sql" =>
-              "SELECT * FROM `employees` WHERE `employees`.`is_deleted` = 0 LIMIT 5"
+            "sql" => "SELECT * FROM `employees` WHERE `employees`.`is_deleted` = 0 LIMIT 5"
           }
         ]
       ]

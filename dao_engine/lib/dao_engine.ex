@@ -1125,6 +1125,5 @@ defmodule DaoEngine do
 
   def now() do
     res = MyXQL.query!(:myxql, "SELECT NOW()").rows
-    IO.inspect(res)
   end
 end

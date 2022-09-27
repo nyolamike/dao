@@ -43,8 +43,7 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
+              "sql" => "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -78,8 +77,7 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
+              "sql" => "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
             }
           ]
         ]
@@ -113,8 +111,7 @@ defmodule GenSqlDeleteDataFromTableTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
+              "sql" => "DELETE FROM `students` WHERE `students`.`is_deleted` = 0"
             }
           ]
         ]

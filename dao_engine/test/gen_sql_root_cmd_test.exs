@@ -189,8 +189,7 @@ defmodule GenSqlRootCmdTest do
         biggest_aircraft: [
           aircraft: %{
             "is_list" => false,
-            "sql" =>
-              "SELECT * FROM `aircraft` WHERE `aircraft`.`is_deleted` = 0"
+            "sql" => "SELECT * FROM `aircraft` WHERE `aircraft`.`is_deleted` = 0"
           }
         ]
       ]

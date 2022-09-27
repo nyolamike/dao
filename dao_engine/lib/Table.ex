@@ -351,8 +351,6 @@ defmodule Table do
     Column.sql_column_name(context, table_name, column_name)
   end
 
-
-
   def preprocess_query_config(context, config_table_def) when is_list(config_table_def) do
     preprocess_query_config(context, %{})
   end

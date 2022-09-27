@@ -2233,8 +2233,7 @@ defmodule DaoCompanyDbTest do
          corporate_branch: [
            branch: %{
              "is_list" => false,
-             "sql" =>
-               "INSERT INTO `branches` VALUES(1, 'Corporate', 100, '2006-02-09')"
+             "sql" => "INSERT INTO `branches` VALUES(1, 'Corporate', 100, '2006-02-09')"
            }
          ],
          corporate_employee: [

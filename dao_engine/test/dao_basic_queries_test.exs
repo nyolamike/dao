@@ -348,8 +348,7 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0 ORDER BY name"
+              "sql" => "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0 ORDER BY name"
             }
           ]
         ]
@@ -448,8 +447,7 @@ defmodule DaoBasicQueriesTest do
           all_students: [
             students: %{
               "is_list" => true,
-              "sql" =>
-                "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0 LIMIT 4"
+              "sql" => "SELECT * FROM `students` WHERE `students`.`is_deleted` = 0 LIMIT 4"
             }
           ]
         ]
