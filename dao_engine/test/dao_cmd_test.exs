@@ -10,7 +10,6 @@ defmodule DaoCmdTest do
   # end
 
   test "using myxql" do
-    # Dao.now()
     context = %{
       "database_type" => "mysql",
       "database_name" => "farmers_db",
@@ -27,6 +26,7 @@ defmodule DaoCmdTest do
         improving_where: [
           farmers: %{
             "name" => "str",
+            "id" => true,
             "dao@where" => {
               {"id", ">", 5},
               "&",
@@ -37,9 +37,12 @@ defmodule DaoCmdTest do
       ]
     ]
 
+    {:ok, does_exist, nil} = Database.check_database_exists_and_strutrue(context)
+    rows_affected = if does_exist == true, do: 1, else: 0
+
     results = Dao.execute(context, query)
     assert expected_context() == results["context"]
-    assert expected_auto_schama_results() == results["auto_schema_changes_results"]
+    assert expected_auto_schama_results(rows_affected) == results["auto_schema_changes_results"]
     assert expected_root_cmd_results() == results["root_cmd_sqls_results"]
     assert expected_node_list() == results["root_cmd_node_list"]
   end
@@ -48,7 +51,7 @@ defmodule DaoCmdTest do
     %{
       "auto_alter_db" => true,
       "auto_schema_changes" => [
-        "DROP DATABASE farmers_db",
+        "DROP DATABASE IF EXISTS farmers_db",
         "CREATE DATABASE IF NOT EXISTS farmers_db",
         "CREATE TABLE `farmers` (id INT(30) AUTO_INCREMENT NOT NULL PRIMARY KEY, name VARCHAR(30), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_update_on DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, is_deleted TINYINT(1) NOT NULL DEFAULT 0, deleted_on DATETIME DEFAULT NULL)"
       ],
@@ -123,7 +126,7 @@ defmodule DaoCmdTest do
     }
   end
 
-  defp expected_auto_schama_results() do
+  defp expected_auto_schama_results(rows_affected) do
     %{
       "errors" => %{},
       "has_errors" => false,
@@ -135,12 +138,12 @@ defmodule DaoCmdTest do
               columns: nil,
               connection_id: :dao@removed,
               last_insert_id: 0,
-              num_rows: 1,
+              num_rows: rows_affected,
               num_warnings: 0,
               rows: nil
             }
           },
-          "sql" => "DROP DATABASE farmers_db"
+          "sql" => "DROP DATABASE IF EXISTS farmers_db"
         },
         1 => %{
           "results" => {
@@ -187,7 +190,7 @@ defmodule DaoCmdTest do
               "results" =>
                 {:ok,
                  %MyXQL.Result{
-                   columns: ["name"],
+                   columns: ["id", "name"],
                    connection_id: :dao@removed,
                    last_insert_id: nil,
                    num_rows: 0,
@@ -195,7 +198,7 @@ defmodule DaoCmdTest do
                    rows: []
                  }},
               "sql" =>
-                "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
+                "SELECT `farmers`.`id`, `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
             }
           ]
         ]
@@ -210,7 +213,7 @@ defmodule DaoCmdTest do
           farmers: %{
             "is_list" => true,
             "sql" =>
-              "SELECT `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
+              "SELECT `farmers`.`id`, `farmers`.`name` FROM `farmers` WHERE ((`farmers`.`id` > 5) AND (`farmers`.`name` LIKE '%brendah%')) AND `farmers`.`is_deleted` = 0"
           }
         ]
       ]

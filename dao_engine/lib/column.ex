@@ -737,8 +737,10 @@ defmodule Column do
   def sql_value_format(nil), do: "NULL"
   def sql_value_format(value) when is_binary(value), do: "'#{value}'"
 
-  def sql_value_format(value) when is_map(value),
-    do: throw("Error!, sql value format for map is not yet implemented")
+  def sql_value_format(value) when is_map(value) do
+    IO.inspect(value, label: "siiiiiiiimpel")
+    throw("Error!, sql value format for map is not yet implemented")
+  end
 
   def sql_value_format(value), do: "#{value}"
 

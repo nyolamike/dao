@@ -30,16 +30,6 @@ defmodule Table do
             throw("Unknown query config: ensuring all columns exist")
         end
 
-      scan = %{
-        "emp_id" => "int",
-        "first_name" => "string",
-        branch: %{
-          "branch_name" => "str"
-          # "dao@link" => {"emp_id","mgr_id"}
-        }
-      }
-
-      Utils.log("proc_query_config", proc_query_config, query_config == scan)
       gen_columns_sql = Column.gen_sql_columns(context, plural_table_name, proc_query_config)
       context = gen_columns_sql["context"]
       schema = Map.put(context["schema"], plural_table_name, gen_columns_sql["table_schema"])
@@ -70,6 +60,25 @@ defmodule Table do
 
     primary_keys_line =
       Column.define_columnx(context, "use_primary_keys", query_config["use_primary_keys"])
+
+    set_default_standard_timestamps =
+      if Map.has_key?(query_config, "use_standard_timestamps") do
+        query_config["use_standard_timestamps"]
+      else
+        # consult context
+        use_standard_timestamps =
+          if Map.has_key?(context, "dao@timestamps") do
+            context["dao@timestamps"]
+          else
+            true
+          end
+
+        if Map.has_key?(context, "use_standard_timestamps") do
+          context["use_standard_timestamps"]
+        else
+          use_standard_timestamps
+        end
+      end
 
     table_schema =
       if set_default_standard_pk == true do
@@ -133,46 +142,59 @@ defmodule Table do
               acc
             end
           else
-            sql_acc = String.trim(acc["sql"])
-            table_schema = acc["table_schema"]
-            col_def = Column.define_column(context, column_name_key, column_config)
-            # update the schema
-            schema = Map.put(table_schema, column_name_key, col_def["config"])
-            comma = if sql_acc == "", do: "", else: ", "
-            sql = sql_acc <> comma <> String.trim(col_def["sql"])
-            # check if we have a col def
-            is_def_only =
-              if acc["is_def_only"] == false,
-                do: false,
-                else: Map.get(col_def, "is_def_only", true)
+            # make sure no conflict with default table columns
+            cond do
+              set_default_standard_pk == true && column_name_key == "id" ->
+                # just continue
+                acc
 
-            foreign_sql =
-              if Map.has_key?(col_def["config"], "fk") do
-                plural_parent_table_name =
-                  col_def["config"] |> Map.get("fk") |> Inflex.pluralize()
+              set_default_standard_timestamps == true &&
+                  column_name_key in ["created_at", "last_update_on", "is_deleted", "deleted_on"] ->
+                # just continue
+                acc
 
-                linked_column_name = Map.get(col_def["config"], "on")
+              true ->
+                sql_acc = String.trim(acc["sql"])
+                table_schema = acc["table_schema"]
+                col_def = Column.define_column(context, column_name_key, column_config)
+                # update the schema
+                schema = Map.put(table_schema, column_name_key, col_def["config"])
+                comma = if sql_acc == "", do: "", else: ", "
+                sql = sql_acc <> comma <> String.trim(col_def["sql"])
+                # check if we have a col def
+                is_def_only =
+                  if acc["is_def_only"] == false,
+                    do: false,
+                    else: Map.get(col_def, "is_def_only", true)
 
-                on_delete_sql =
-                  if Map.get(col_def["config"], "on_delete") in [nil, "null", "NULL"],
-                    do: " SET NULL",
-                    else: " CASCADE"
+                foreign_sql =
+                  if Map.has_key?(col_def["config"], "fk") do
+                    plural_parent_table_name =
+                      col_def["config"] |> Map.get("fk") |> Inflex.pluralize()
 
-                fsql =
-                  "FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+                    linked_column_name = Map.get(col_def["config"], "on")
 
-                acc["foreign_keys_sql"] ++ [fsql]
-              else
-                acc["foreign_keys_sql"]
-              end
+                    on_delete_sql =
+                      if Map.get(col_def["config"], "on_delete") in [nil, "null", "NULL"],
+                        do: " SET NULL",
+                        else: " CASCADE"
 
-            %{
-              "sql" => sql,
-              "table_schema" => schema,
-              "is_def_only" => is_def_only,
-              "foreign_keys_sql" => foreign_sql,
-              "context" => acc["context"]
-            }
+                    fsql =
+                      "FOREIGN KEY(#{column_name_key}) REFERENCES #{plural_parent_table_name}(#{linked_column_name}) ON DELETE#{on_delete_sql}"
+
+                    acc["foreign_keys_sql"] ++ [fsql]
+                  else
+                    acc["foreign_keys_sql"]
+                  end
+
+                %{
+                  "sql" => sql,
+                  "table_schema" => schema,
+                  "is_def_only" => is_def_only,
+                  "foreign_keys_sql" => foreign_sql,
+                  "context" => acc["context"]
+                }
+            end
           end
         end)
       else
@@ -192,25 +214,6 @@ defmodule Table do
     foreign_results = Column.process_foreign_keys(table_col_def, query_config)
     foreign_keys_table_schema = foreign_results["table_schema"]
     foreign_keys_sql = foreign_results["sql"]
-
-    set_default_standard_timestamps =
-      if Map.has_key?(query_config, "use_standard_timestamps") do
-        query_config["use_standard_timestamps"]
-      else
-        # consult context
-        use_standard_timestamps =
-          if Map.has_key?(context, "dao@timestamps") do
-            context["dao@timestamps"]
-          else
-            true
-          end
-
-        if Map.has_key?(context, "use_standard_timestamps") do
-          context["use_standard_timestamps"]
-        else
-          use_standard_timestamps
-        end
-      end
 
     # scan for foreign keys
     default_table_schema =
@@ -352,7 +355,22 @@ defmodule Table do
   end
 
   def preprocess_query_config(context, config_table_def) when is_list(config_table_def) do
-    preprocess_query_config(context, %{})
+    # check if the first one is a map then go through all to extract the posiible columns
+    possible_def =
+      cond do
+        config_table_def == [] ->
+          %{}
+
+        config_table_def |> hd() |> is_map() ->
+          Enum.reduce(config_table_def, %{}, fn item, acc ->
+            Map.merge(acc, item)
+          end)
+
+        true ->
+          %{}
+      end
+
+    preprocess_query_config(context, possible_def)
   end
 
   def preprocess_query_config(context, config_table_def) do

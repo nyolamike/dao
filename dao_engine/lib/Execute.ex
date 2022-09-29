@@ -195,6 +195,7 @@ defmodule Execute do
            "CREATE TABLE",
            "DROP TABLE",
            "SELECT",
+           "INSERT",
            "DELETE"
          ]) do
         # requires a db connection

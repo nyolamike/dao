@@ -30,7 +30,6 @@ defmodule DaoEngine do
     :world
   end
 
-
   def translate_query(context, query_object) do
     # query object have the following root keys
     # get
@@ -151,9 +150,14 @@ defmodule DaoEngine do
 
       {context, any_alter_table_sql, is_def_only} =
         case ensure_table_response do
-          {context, sql} -> {context, sql, false}
-          {context, sql, is_def_only} -> {context, sql, is_def_only}
-          context -> {context, "", false}
+          {context, sql} ->
+            {context, sql, false}
+
+          {context, sql, is_def_only} ->
+            {context, sql, is_def_only}
+
+          context ->
+            {context, "", false}
         end
 
       insert_cols_sql =
@@ -168,23 +172,88 @@ defmodule DaoEngine do
             is_list(query_config) ->
               [h | _t] = query_config
 
-              # remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
+              # nyd: remeber that if we have new auto inserted cols like col_x, col_y these can cause the query to be wrong
               # so we need a way to keep our data organised accordingly
-              gen_values_sql =
-                if is_list(h) do
+              cond do
+                is_list(h) ->
                   # we are dealing with an array of arrays
-                  Enum.reduce(query_config, "", fn array_of_values, sql_acc ->
-                    array_values_sql =
-                      Enum.reduce(array_of_values, "", fn value, sql_acc ->
-                        str_val = Column.sql_value_format(value)
+                  values_sql =
+                    Enum.reduce(query_config, "", fn array_of_values, sql_acc ->
+                      array_values_sql =
+                        Enum.reduce(array_of_values, "", fn value, sql_acc ->
+                          str_val = Column.sql_value_format(value)
+                          comma = if sql_acc == "", do: "", else: ", "
+                          sql_acc <> comma <> str_val
+                        end)
+
+                      comma = if sql_acc == "", do: "", else: ", "
+                      "#{sql_acc}#{comma}(#{array_values_sql})"
+                    end)
+
+                  "#{sql} VALUES#{values_sql}"
+
+                is_map(h) ->
+                  # we are dealing with a list of items
+                  temp_tracer = %{
+                    "multi_statments" => [],
+                    "single_statment_values" => [],
+                    "has_similar_cols" => nil,
+                    "base_col_sql" => ""
+                  }
+
+                  temp_synth_results =
+                    Enum.reduce(query_config, temp_tracer, fn item_map, sql_acc ->
+                      sql_pats_map = gen_sql_name_values_from_map(item_map, "", true)
+                      col_names_sql = sql_pats_map["col_names_sql"]
+                      col_vals_sql = sql_pats_map["col_vals_sql"]
+
+                      base_col_sql =
+                        if sql_acc["has_similar_cols"] == nil do
+                          col_names_sql
+                        else
+                          sql_acc["base_col_sql"]
+                        end
+
+                      has_similar_cols =
+                        cond do
+                          sql_acc["has_similar_cols"] == false -> false
+                          sql_acc["has_similar_cols"] == nil -> true
+                          true -> base_col_sql == col_names_sql
+                        end
+
+                      cols = String.trim(col_names_sql)
+                      values = String.trim(col_vals_sql)
+
+                      many_item_stmnt =
+                        if values == "", do: "", else: "#{sql}(#{cols}) VALUES(#{values})"
+
+                      %{
+                        "multi_statments" => [many_item_stmnt | sql_acc["multi_statments"]],
+                        "single_statment_values" => [values | sql_acc["single_statment_values"]],
+                        "has_similar_cols" => has_similar_cols,
+                        "base_col_sql" => base_col_sql
+                      }
+                    end)
+
+                  if temp_synth_results["has_similar_cols"] == true do
+                    # we generate a single insert statment
+                    cols = String.trim(temp_synth_results["base_col_sql"])
+
+                    values =
+                      temp_synth_results["single_statment_values"]
+                      |> Enum.reverse()
+                      |> Enum.reduce("", fn values_sql, sql_acc ->
                         comma = if sql_acc == "", do: "", else: ", "
-                        sql_acc <> comma <> str_val
+                        "#{sql_acc}#{comma}(#{values_sql})"
                       end)
 
-                    comma = if sql_acc == "", do: "", else: ", "
-                    "#{sql_acc}#{comma}(#{array_values_sql})"
-                  end)
-                else
+                    if values == "", do: "", else: "#{sql}(#{cols}) VALUES#{values}"
+                  else
+                    # join together multiple insert statments
+                    temp_synth_results["multi_statments"]
+                  end
+
+                true ->
                   # the query_config is single array of values
                   values_sql =
                     Enum.reduce(query_config, "", fn value, sql_acc ->
@@ -193,38 +262,11 @@ defmodule DaoEngine do
                       sql_acc <> comma <> str_val
                     end)
 
-                  "(#{values_sql})"
-                end
-
-              "#{sql} VALUES#{gen_values_sql}"
+                  "#{sql} VALUES(#{values_sql})"
+              end
 
             is_map(query_config) ->
-              acc_4_map = %{
-                "col_names_sql" => "",
-                "col_vals_sql" => ""
-              }
-
-              gen_values_sql =
-                Enum.reduce(query_config, acc_4_map, fn {key, value}, acc ->
-                  skip = Utils.skip_keys()
-
-                  if key in skip do
-                    acc
-                  else
-                    col_comma = if acc["col_names_sql"] == "", do: "", else: ", "
-                    cols_sql_acc = acc["col_names_sql"] <> col_comma <> key
-
-                    str_val = Column.sql_value_format(value)
-                    comma = if acc["col_vals_sql"] == "", do: "", else: ", "
-                    sql_acc = acc["col_vals_sql"] <> comma <> str_val
-                    %{acc | "col_names_sql" => cols_sql_acc, "col_vals_sql" => sql_acc}
-                  end
-                end)
-
-              # nyd: throw an error if there are no columns or values
-              cols = String.trim(gen_values_sql["col_names_sql"])
-              values = String.trim(gen_values_sql["col_vals_sql"])
-              if values == "", do: "", else: "#{sql}(#{cols}) VALUES(#{values})"
+              gen_sql_name_values_from_map(query_config, sql)
 
             true ->
               throw("Unknown query config: gen values sql")
@@ -277,6 +319,39 @@ defmodule DaoEngine do
           %{"context" => context, "fixture_list" => [{node_name_key, fixture_config}]}
       end
     end)
+  end
+
+  def gen_sql_name_values_from_map(query_config, sql, return_seqments \\ false) do
+    acc_4_map = %{
+      "col_names_sql" => "",
+      "col_vals_sql" => ""
+    }
+
+    gen_values_sql =
+      Enum.reduce(query_config, acc_4_map, fn {key, value}, acc ->
+        skip = Utils.skip_keys()
+
+        if key in skip do
+          acc
+        else
+          col_comma = if acc["col_names_sql"] == "", do: "", else: ", "
+          cols_sql_acc = acc["col_names_sql"] <> col_comma <> key
+
+          str_val = Column.sql_value_format(value)
+          comma = if acc["col_vals_sql"] == "", do: "", else: ", "
+          sql_acc = acc["col_vals_sql"] <> comma <> str_val
+          %{acc | "col_names_sql" => cols_sql_acc, "col_vals_sql" => sql_acc}
+        end
+      end)
+
+    if return_seqments == false do
+      # nyd: throw an error if there are no columns or values
+      cols = String.trim(gen_values_sql["col_names_sql"])
+      values = String.trim(gen_values_sql["col_vals_sql"])
+      if values == "", do: "", else: "#{sql}(#{cols}) VALUES(#{values})"
+    else
+      gen_values_sql
+    end
   end
 
   @spec gen_sql_for_get(map(), keyword(), keyword()) :: map()

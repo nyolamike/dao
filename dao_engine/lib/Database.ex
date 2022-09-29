@@ -81,7 +81,7 @@ defmodule Database do
 
   def gen_sql_for_drop_db(context) do
     db_name = context["database_name"]
-    create_db_sql = "DROP DATABASE #{db_name}"
+    create_db_sql = "DROP DATABASE IF EXISTS #{db_name}"
     auto_changes = context["auto_schema_changes"] ++ [create_db_sql]
     %{context | "auto_schema_changes" => auto_changes}
   end
