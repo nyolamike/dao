@@ -655,8 +655,10 @@ defmodule DaoEngine do
                             "#{column_name} AS #{format_config["as"]}"
 
                           is_binary(format_config) && Column.is_data_type(format_config) == false ->
-                            # nyd: this will be used as the as shorthand for now
-                            "#{column_name} AS #{format_config}"
+                            # nyd: please process the formating info e.g A
+                            # this may server as a way of specifying AS #{format_config} or somthing else
+                            # for now we shall just take only the column name
+                            "#{column_name}"
 
                           true ->
                             column_name

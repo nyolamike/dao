@@ -190,42 +190,60 @@ defmodule Execute do
     db_name = if is_atom(db_name), do: Atom.to_string(db_name), else: db_name
 
     {connections, query_results} =
-      if String.starts_with?(sql_query, [
-           "ALTER",
-           "CREATE TABLE",
-           "DROP TABLE",
-           "SELECT",
-           "INSERT",
-           "DELETE"
-         ]) do
-        # requires a db connection
-        # check if we already have a connection
-        connections =
-          if Map.has_key?(connections, db_name) == false do
-            # try to connect
-            conn_pid = Dbms.connect(context)
-            Map.put(connections, db_name, conn_pid)
-          else
-            # nyd: post this "As dangerous as an if statement in elixir without and else cluase
-            connections
-          end
+      cond do
+        is_binary(sql_query) ->
+          run_single_query(context, connections, db_name, sql_query)
 
-        connection = connections[db_name]
+        is_list(sql_query) ->
+          temp_res =
+            Enum.map(sql_query, fn query ->
+              {_connections, item_query_results} =
+                run_single_query(context, connections, db_name, query)
 
-        # nyd: continue only if there are no errors
-        # use the specific connction to the database
-        query_res = Dbms.query(context, connection, sql_query)
-        query_res = remove_connection_id(context, query_res)
+              item_query_results
+            end)
 
-        {connections, query_res}
-      else
-        # use the general connction to the dbms
-        query_res = Dbms.query(context, sql_query)
-        query_res = remove_connection_id(context, query_res)
-        {connections, query_res}
+          {connections, temp_res}
       end
 
     {connections, query_results}
+  end
+
+  def run_single_query(context, connections, db_name, sql_query) do
+    if String.starts_with?(sql_query, [
+         "ALTER",
+         "CREATE TABLE",
+         "DROP TABLE",
+         "SELECT",
+         "INSERT",
+         "DELETE"
+       ]) do
+      # requires a db connection
+      # check if we already have a connection
+      connections =
+        if Map.has_key?(connections, db_name) == false do
+          # try to connect
+          conn_pid = Dbms.connect(context)
+          Map.put(connections, db_name, conn_pid)
+        else
+          # nyd: post this "As dangerous as an if statement in elixir without and else cluase
+          connections
+        end
+
+      connection = connections[db_name]
+
+      # nyd: continue only if there are no errors
+      # use the specific connction to the database
+      query_res = Dbms.query(context, connection, sql_query)
+      query_res = remove_connection_id(context, query_res)
+
+      {connections, query_res}
+    else
+      # use the general connction to the dbms
+      query_res = Dbms.query(context, sql_query)
+      query_res = remove_connection_id(context, query_res)
+      {connections, query_res}
+    end
   end
 
   def remove_connection_id(context, {:ok, sql_result}) do
